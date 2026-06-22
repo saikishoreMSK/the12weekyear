@@ -1,0 +1,15 @@
+# Build artifacts
+target/
+
+# Secrets / local env (must never enter the image)
+.env
+.env.*
+!.env.example
+
+# VCS / IDE / misc
+.git
+.gitignore
+.idea/
+*.iml
+.vscode/
+HELP.md
