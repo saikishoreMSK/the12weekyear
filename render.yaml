@@ -1,0 +1,49 @@
+# Render Blueprint — declares both services for The 12 Week Year.
+# Apply via Render dashboard → New → Blueprint → pick this repo.
+# Secrets (sync: false) are entered in the dashboard, never committed here.
+services:
+  # ---------------- Backend: Spring Boot (Docker) ----------------
+  - type: web
+    name: twelveweekyear-api
+    runtime: docker
+    branch: main
+    region: singapore        # closest to Supabase (ap-northeast) / India; change if you prefer
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/v1/health
+    envVars:
+      # Supabase connection — fill in the dashboard. Prefer the SESSION pooler (port 5432).
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      # JWT signing secret — Render generates a strong value once.
+      - key: JWT_SECRET
+        generateValue: true
+      # Allowed browser origin = the frontend URL below. Fill after first deploy.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: JPA_DDL_AUTO
+        value: update
+
+  # ---------------- Frontend: Next.js (Node) ----------------
+  - type: web
+    name: twelveweekyear-web
+    runtime: node
+    branch: main
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    # Bind explicitly to Render's $PORT so the server is detected.
+    startCommand: npx next start -p $PORT
+    envVars:
+      # Base URL of the backend API above (https://twelveweekyear-api.onrender.com).
+      # Inlined at BUILD time — set it before the first build, then redeploy if it changes.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: 22.17.1
