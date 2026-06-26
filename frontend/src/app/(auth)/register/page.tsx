@@ -34,9 +34,10 @@ export default function RegisterPage() {
   async function onSubmit(values: RegisterValues) {
     setFormError(null);
     try {
-      // timezone is auto-detected by the auth context from the browser.
+      // timezone is auto-detected by the auth context. Registration sends an OTP instead of
+      // logging in, so we route to the verification screen.
       await registerUser(values);
-      router.replace("/dashboard");
+      router.replace(`/verify-email?email=${encodeURIComponent(values.email)}`);
     } catch (error) {
       setFormError(
         error instanceof ApiException

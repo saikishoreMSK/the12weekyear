@@ -23,7 +23,15 @@ export interface RegisterInput {
   timezone?: string;
 }
 
+/** Mirrors the backend `RegistrationResponse` — no tokens until the email is verified. */
+export interface RegistrationResult {
+  email: string;
+  verificationRequired: boolean;
+}
+
 export interface LoginInput {
   email: string;
   password: string;
 }
+
+export type OtpPurpose = "EMAIL_VERIFICATION" | "PASSWORD_RESET";

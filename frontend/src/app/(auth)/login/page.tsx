@@ -37,6 +37,11 @@ export default function LoginPage() {
       await login(values);
       router.replace("/dashboard");
     } catch (error) {
+      // An unverified account is sent to the OTP screen rather than shown an error.
+      if (error instanceof ApiException && error.code === "EMAIL_NOT_VERIFIED") {
+        router.replace(`/verify-email?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
       setFormError(
         error instanceof ApiException
           ? error.message
@@ -68,7 +73,15 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-muted-foreground text-xs underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"

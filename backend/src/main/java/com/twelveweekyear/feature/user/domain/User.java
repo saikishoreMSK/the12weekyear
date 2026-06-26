@@ -41,6 +41,14 @@ public class User {
     @Column(nullable = false)
     private String timezone;
 
+    /**
+     * Whether the email has been confirmed via OTP. New sign-ups are created {@code false} and must
+     * verify. The column default is {@code true} so that accounts created before this feature (and
+     * any existing rows when the column is added) remain usable without re-verifying.
+     */
+    @Column(name = "email_verified", columnDefinition = "boolean not null default true")
+    private boolean emailVerified;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -87,6 +95,14 @@ public class User {
 
     public void setTimezone(String timezone) {
         this.timezone = timezone;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public Instant getCreatedAt() {

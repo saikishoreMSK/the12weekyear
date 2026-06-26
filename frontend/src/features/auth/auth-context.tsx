@@ -13,7 +13,7 @@ import {
 import { registerUnauthorizedHandler } from "@/lib/api/client";
 import { tokenStorage } from "@/lib/auth/token-storage";
 import { authApi } from "./api";
-import type { LoginInput, RegisterInput, User } from "./types";
+import type { AuthResponse, LoginInput, RegisterInput, RegistrationResult, User } from "./types";
 
 type Status = "loading" | "authenticated" | "unauthenticated";
 
@@ -21,7 +21,8 @@ interface AuthContextValue {
   user: User | null;
   status: Status;
   login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
+  register: (input: RegisterInput) => Promise<RegistrationResult>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -83,15 +84,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
-  const register = useCallback(async (input: RegisterInput) => {
-    const auth = await authApi.register({
-      ...input,
-      timezone: input.timezone ?? detectTimezone(),
-    });
+  // Registration no longer logs you in — it creates an unverified account and emails an OTP.
+  const register = useCallback(
+    (input: RegisterInput): Promise<RegistrationResult> =>
+      authApi.register({ ...input, timezone: input.timezone ?? detectTimezone() }),
+    [],
+  );
+
+  const applySession = useCallback((auth: AuthResponse) => {
     tokenStorage.set(auth.accessToken, auth.refreshToken);
     setUser(auth.user);
     setStatus("authenticated");
   }, []);
+
+  // Successful email verification returns tokens — this is where a new user actually signs in.
+  const verifyEmail = useCallback(
+    async (email: string, code: string) => {
+      applySession(await authApi.verifyEmail(email, code));
+    },
+    [applySession],
+  );
 
   const logout = useCallback(async () => {
     const refreshToken = tokenStorage.getRefreshToken();
@@ -103,8 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, register, verifyEmail, logout }),
+    [user, status, login, register, verifyEmail, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -81,6 +81,12 @@ public class RefreshTokenService {
         repository.findByTokenHash(hash(rawToken)).ifPresent(token -> token.setRevoked(true));
     }
 
+    /** Revoke every active token for a user — used after a password reset. */
+    @Transactional
+    public void revokeAll(UUID userId) {
+        repository.revokeAllForUser(userId);
+    }
+
     private String generateRawToken() {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);

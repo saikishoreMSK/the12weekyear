@@ -170,6 +170,19 @@ wrapper cache rather than the `mvnw` bootstrap.
   **web manifest + icon** making the app installable ("Add to Home Screen"). Offline service
   worker is intentionally deferred.
 
-**All six core features + polish are implemented.** Remaining future work: Flyway migrations +
-`validate` before production, an offline service worker, and the recurring-pattern analytics over
-stored weekly reviews.
+- **Phase 8 — Email OTP (verification + password reset): complete.** Registration now creates an
+  unverified account and emails a 6-digit OTP (no tokens until verified); `verify-email` confirms
+  and logs in; login rejects unverified accounts with `EMAIL_NOT_VERIFIED`. Password reset via OTP
+  (`forgot-password` → `reset-password`, which revokes all sessions). Rules: 5-min expiry, 120s
+  resend cooldown, max 5 attempts, codes stored hashed. Pluggable `EmailSender` —
+  `log` (dev, prints to console) or `resend` (HTTP, works on Render's SMTP-blocked free tier),
+  chosen by `app.email.provider`. Existing accounts are backfilled as verified (DB column default
+  `true`) so only new sign-ups must verify. Pure `Otps` helpers unit-tested.
+
+  Auth additions: `POST /api/v1/auth/{verify-email,resend-otp,forgot-password,reset-password}`;
+  `register` now returns `{ email, verificationRequired }`. Frontend: `/verify-email`,
+  `/forgot-password`, `/reset-password` with resend countdowns.
+
+**All six core features + polish + email OTP are implemented.** Remaining future work: Flyway
+migrations + `validate` before production, an offline service worker, recurring-pattern analytics
+over stored weekly reviews, and a scheduled cleanup of expired OTP rows.

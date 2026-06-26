@@ -1,6 +1,8 @@
 package com.twelveweekyear.common.security;
 
+import com.twelveweekyear.common.email.EmailProperties;
 import com.twelveweekyear.feature.auth.config.AuthProperties;
+import com.twelveweekyear.feature.auth.config.OtpProperties;
 import com.twelveweekyear.feature.auth.service.JwtService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +24,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
  * Everything else requires a valid access token, validated by {@link JwtAuthenticationFilter}.
  */
 @Configuration
-@EnableConfigurationProperties(AuthProperties.class)
+@EnableConfigurationProperties({AuthProperties.class, OtpProperties.class, EmailProperties.class})
 public class SecurityConfig {
 
     private final RestAuthenticationEntryPoint authenticationEntryPoint;

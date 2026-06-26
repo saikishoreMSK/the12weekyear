@@ -13,7 +13,8 @@ tracking, weekly reviews, a sprint dashboard, quarterly goals, and streak analyt
 | Backend  | Spring Boot 3.5, Java 17, Spring Data JPA, Bean Validation (Spring Security + JWT in the Auth phase) |
 | Database | PostgreSQL (Supabase) |
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design decisions.
+- **How the app works (sign-up → daily use → analytics, with examples):** [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- **Architecture & design decisions:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Layout
 

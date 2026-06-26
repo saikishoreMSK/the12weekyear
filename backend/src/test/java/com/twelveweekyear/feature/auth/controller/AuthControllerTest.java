@@ -1,10 +1,9 @@
 package com.twelveweekyear.feature.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.twelveweekyear.feature.auth.dto.AuthResponse;
 import com.twelveweekyear.feature.auth.dto.RegisterRequest;
+import com.twelveweekyear.feature.auth.dto.RegistrationResponse;
 import com.twelveweekyear.feature.auth.service.AuthService;
-import com.twelveweekyear.feature.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,9 +11,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -36,10 +32,9 @@ class AuthControllerTest {
     private AuthService authService;
 
     @Test
-    void registerReturnsCreatedWithTokensEnvelope() throws Exception {
-        var user = new UserResponse(UUID.randomUUID(), "alice@example.com", "Alice", "UTC", Instant.now());
+    void registerReturnsVerificationRequiredEnvelope() throws Exception {
         when(authService.register(any())).thenReturn(
-                new AuthResponse("access-token", "refresh-token", "Bearer", 900, user));
+                new RegistrationResponse("alice@example.com", true));
 
         var body = new RegisterRequest("alice@example.com", "password123", "Alice", "Asia/Kolkata");
 
@@ -48,9 +43,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.data.user.email").value("alice@example.com"));
+                .andExpect(jsonPath("$.data.email").value("alice@example.com"))
+                .andExpect(jsonPath("$.data.verificationRequired").value(true));
     }
 
     @Test

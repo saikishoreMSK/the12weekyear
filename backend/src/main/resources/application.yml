@@ -45,3 +45,13 @@ app:
     # Simple duration format: s, m, h, d.
     access-token-ttl: ${ACCESS_TOKEN_TTL:15m}
     refresh-token-ttl: ${REFRESH_TOKEN_TTL:30d}
+  otp:
+    length: ${OTP_LENGTH:6}
+    expiry: ${OTP_EXPIRY:5m}
+    resend-cooldown: ${OTP_RESEND_COOLDOWN:120s}
+    max-attempts: ${OTP_MAX_ATTEMPTS:5}
+  email:
+    # "log" prints the OTP to the server console (dev). Set to "resend" with an API key in prod.
+    provider: ${EMAIL_PROVIDER:log}
+    from: ${MAIL_FROM:The 12 Week Year <onboarding@resend.dev>}
+    resend-api-key: ${RESEND_API_KEY:}
