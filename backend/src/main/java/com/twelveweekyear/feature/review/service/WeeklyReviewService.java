@@ -3,8 +3,9 @@ package com.twelveweekyear.feature.review.service;
 import com.twelveweekyear.common.exception.AppException;
 import com.twelveweekyear.common.exception.ErrorCode;
 import com.twelveweekyear.common.exception.ResourceNotFoundException;
-import com.twelveweekyear.feature.cycle.domain.Cycle;
-import com.twelveweekyear.feature.cycle.service.CycleService;
+import com.twelveweekyear.feature.quarter.domain.Quarter;
+import com.twelveweekyear.feature.quarter.service.QuarterService;
+import com.twelveweekyear.feature.quarter.support.QuarterMath;
 import com.twelveweekyear.feature.review.domain.WeeklyReview;
 import com.twelveweekyear.feature.review.dto.WeeklyReviewRequest;
 import com.twelveweekyear.feature.review.dto.WeeklyReviewResponse;
@@ -16,51 +17,53 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-/** Weekly reviews for a cycle. Upsert by week; never deleted individually (answers are permanent). */
+/** Weekly reviews for a quarter. Upsert by week; never deleted individually (answers are permanent). */
 @Service
 public class WeeklyReviewService {
 
-    private final CycleService cycleService;
+    private final QuarterService quarterService;
     private final WeeklyReviewRepository reviewRepository;
     private final WeeklyReviewMapper reviewMapper;
 
-    public WeeklyReviewService(CycleService cycleService,
+    public WeeklyReviewService(QuarterService quarterService,
                                WeeklyReviewRepository reviewRepository,
                                WeeklyReviewMapper reviewMapper) {
-        this.cycleService = cycleService;
+        this.quarterService = quarterService;
         this.reviewRepository = reviewRepository;
         this.reviewMapper = reviewMapper;
     }
 
     @Transactional(readOnly = true)
-    public List<WeeklyReviewResponse> list(UUID userId, UUID cycleId) {
-        cycleService.requireOwnedCycle(userId, cycleId);
-        return reviewRepository.findByCycleIdOrderByWeekNumberAsc(cycleId).stream()
+    public List<WeeklyReviewResponse> list(UUID userId, UUID quarterId) {
+        quarterService.requireOwnedQuarter(userId, quarterId);
+        return reviewRepository.findByQuarterIdOrderByWeekNumberAsc(quarterId).stream()
                 .map(reviewMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public WeeklyReviewResponse get(UUID userId, UUID cycleId, int weekNumber) {
-        cycleService.requireOwnedCycle(userId, cycleId);
-        return reviewRepository.findByCycleIdAndWeekNumber(cycleId, weekNumber)
+    public WeeklyReviewResponse get(UUID userId, UUID quarterId, int weekNumber) {
+        quarterService.requireOwnedQuarter(userId, quarterId);
+        return reviewRepository.findByQuarterIdAndWeekNumber(quarterId, weekNumber)
                 .map(reviewMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("No review for this week yet"));
     }
 
     @Transactional
-    public WeeklyReviewResponse upsert(UUID userId, UUID cycleId, int weekNumber, WeeklyReviewRequest request) {
-        cycleService.requireOwnedCycle(userId, cycleId);
-        if (weekNumber < 1 || weekNumber > Cycle.TOTAL_WEEKS) {
+    public WeeklyReviewResponse upsert(UUID userId, UUID quarterId, int weekNumber, WeeklyReviewRequest request) {
+        Quarter quarter = quarterService.requireOwnedQuarter(userId, quarterId);
+        int totalWeeks = QuarterMath.totalWeeks(
+                QuarterMath.bounds(quarter.getYear(), quarter.getQuarterNumber()).totalDays());
+        if (weekNumber < 1 || weekNumber > totalWeeks) {
             throw new AppException(ErrorCode.VALIDATION_FAILED,
-                    "Week number must be between 1 and " + Cycle.TOTAL_WEEKS);
+                    "Week number must be between 1 and " + totalWeeks);
         }
 
-        WeeklyReview review = reviewRepository.findByCycleIdAndWeekNumber(cycleId, weekNumber)
+        WeeklyReview review = reviewRepository.findByQuarterIdAndWeekNumber(quarterId, weekNumber)
                 .orElseGet(() -> {
                     WeeklyReview created = new WeeklyReview();
                     created.setUserId(userId);
-                    created.setCycleId(cycleId);
+                    created.setQuarterId(quarterId);
                     created.setWeekNumber(weekNumber);
                     return created;
                 });

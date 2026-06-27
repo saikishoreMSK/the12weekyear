@@ -9,9 +9,11 @@ import java.util.UUID;
 
 public interface WeeklyReviewRepository extends JpaRepository<WeeklyReview, UUID> {
 
-    List<WeeklyReview> findByCycleIdOrderByWeekNumberAsc(UUID cycleId);
+    List<WeeklyReview> findByQuarterIdOrderByWeekNumberAsc(UUID quarterId);
 
-    Optional<WeeklyReview> findByCycleIdAndWeekNumber(UUID cycleId, int weekNumber);
+    Optional<WeeklyReview> findByQuarterIdAndWeekNumber(UUID quarterId, int weekNumber);
 
-    void deleteByCycleId(UUID cycleId);
+    int countByQuarterId(UUID quarterId);
+
+    void deleteByQuarterId(UUID quarterId);
 }

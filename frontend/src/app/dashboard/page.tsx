@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { dashboardApi } from "@/features/dashboard/api";
-import type { Dashboard } from "@/features/dashboard/types";
-import { DashboardHabitRow } from "@/features/dashboard/components/dashboard-habit-row";
-import { ApiException } from "@/lib/api/client";
+import { quarterApi } from "@/features/quarter/api";
+import type { QuarterTile, YearDashboard } from "@/features/quarter/types";
 import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/ui/button";
@@ -14,24 +13,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type State =
-  | { kind: "loading" }
-  | { kind: "none" } // no active cycle
-  | { kind: "error" }
-  | { kind: "ready"; data: Dashboard };
-
 export default function DashboardPage() {
-  const [state, setState] = useState<State>({ kind: "loading" });
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [data, setData] = useState<YearDashboard | null>(null);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
-    dashboardApi
-      .get()
-      .then((data) => setState({ kind: "ready", data }))
-      .catch((err) => {
-        if (err instanceof ApiException && err.status === 404) setState({ kind: "none" });
-        else setState({ kind: "error" });
-      });
-  }, []);
+    setData(null);
+    setError(false);
+    quarterApi
+      .dashboard(year)
+      .then(setData)
+      .catch(() => setError(true));
+  }, [year]);
 
   useEffect(() => {
     load();
@@ -40,125 +34,106 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
-        {state.kind === "loading" && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-24 w-full" />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">{year}</h1>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" aria-label="Previous year" onClick={() => setYear((y) => y - 1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button variant="outline" size="icon" aria-label="Next year" onClick={() => setYear((y) => y + 1)}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        {error && <p className="text-destructive mt-6 text-sm">Couldn&apos;t load your year.</p>}
+
+        {!data && !error && (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-40 w-full" />
+            ))}
           </div>
         )}
 
-        {state.kind === "error" && (
-          <p className="text-destructive text-sm">Couldn&apos;t load your dashboard.</p>
+        {data && (
+          <FadeIn className="mt-6 grid gap-4 sm:grid-cols-2">
+            {data.quarters.map((q) => (
+              <QuarterCard key={q.quarterNumber} year={year} tile={q} />
+            ))}
+          </FadeIn>
         )}
-
-        {state.kind === "none" && (
-          <Card>
-            <CardContent className="py-10 text-center">
-              <h1 className="text-lg font-semibold">No active cycle</h1>
-              <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
-                Start a 12-week cycle and add goals to see your sprint dashboard.
-              </p>
-              <Button asChild className="mt-4">
-                <Link href="/cycles/new">Create a cycle</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {state.kind === "ready" && <DashboardView data={state.data} onChange={load} />}
       </main>
     </div>
   );
 }
 
-function DashboardView({ data, onChange }: { data: Dashboard; onChange: () => void }) {
-  const dayProgress = data.currentDay
-    ? Math.round((data.currentDay / data.totalDays) * 100)
-    : 0;
+function QuarterCard({ year, tile }: { year: number; tile: QuarterTile }) {
+  const heading = `Q${tile.quarterNumber} · ${tile.label}`;
 
-  return (
-    <FadeIn className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{data.cycleTitle}</h1>
-        <p className="text-muted-foreground text-sm">
-          {data.currentDay
-            ? `Day ${data.currentDay} / ${data.totalDays}`
-            : "Not in progress"}
-          {data.currentWeek ? ` · Week ${data.currentWeek} / ${data.totalWeeks}` : ""}
-        </p>
-        <Progress value={dayProgress} className="mt-2" />
-      </div>
-
-      {/* Sprint Score */}
-      <Card>
-        <CardContent className="py-6">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">Sprint Score</p>
-              <p className="text-4xl font-bold tabular-nums">{data.sprintScore}%</p>
-            </div>
-            <div className="text-muted-foreground space-y-1 text-right text-xs">
-              <p>Goals {data.goalsProgress}%</p>
-              <p>Habits {data.habitsConsistency}%</p>
-            </div>
+  if (!tile.planned) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex h-40 flex-col items-center justify-center gap-3 text-center">
+          <div>
+            <p className="font-semibold">{heading}</p>
+            <p className="text-muted-foreground text-xs">Not planned yet</p>
           </div>
-          <Progress value={data.sprintScore} className="mt-3" />
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/quarters/new?year=${year}&q=${tile.quarterNumber}`}>
+              Plan Q{tile.quarterNumber}
+            </Link>
+          </Button>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Goals */}
-      <section>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Goals</h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href={`/cycles/${data.cycleId}`}>Manage</Link>
-          </Button>
-        </div>
-        {data.goals.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No goals yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {data.goals.map((goal) => (
-              <div key={goal.id} className="bg-card rounded-lg border p-3">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-medium">
-                    <span className="text-muted-foreground">{goal.category}: </span>
-                    {goal.title}
-                  </span>
-                  <span className="text-muted-foreground shrink-0 tabular-nums">
-                    {goal.currentValue} / {goal.targetValue} {goal.unit}
+  return (
+    <Link href={`/quarters/${tile.quarterId}`} className="block">
+      <Card className="h-40 transition-colors hover:bg-accent/50">
+        <CardContent className="flex h-full flex-col">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-semibold">{heading}</p>
+              {tile.title && <p className="text-muted-foreground truncate text-xs">{tile.title}</p>}
+            </div>
+            <StateBadge state={tile.state} />
+          </div>
+
+          <div className="mt-auto">
+            {tile.score !== null ? (
+              <>
+                <div className="flex items-end justify-between">
+                  <span className="text-3xl font-bold tabular-nums">{tile.score}%</span>
+                  <span className="text-muted-foreground text-xs">
+                    {tile.currentDay ? `Day ${tile.currentDay}/${tile.totalDays}` : `${tile.goalCount} goals`}
                   </span>
                 </div>
-                <Progress value={goal.progressPercent} className="mt-2" />
-              </div>
-            ))}
+                <Progress value={tile.score} className="mt-1.5" />
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {tile.goalCount} {tile.goalCount === 1 ? "goal" : "goals"} planned · starts soon
+              </p>
+            )}
           </div>
-        )}
-      </section>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
 
-      {/* Habits */}
-      <section>
-        <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Today&apos;s habits</h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/habits">Manage</Link>
-          </Button>
-        </div>
-        {data.habits.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No habits yet.</p>
-        ) : (
-          <div className="bg-card divide-y rounded-lg border px-4">
-            {data.habits.map((habit) => (
-              <DashboardHabitRow key={habit.id} habit={habit} onToggled={onChange} />
-            ))}
-          </div>
-        )}
-      </section>
-    </FadeIn>
+function StateBadge({ state }: { state: QuarterTile["state"] }) {
+  const styles: Record<QuarterTile["state"], string> = {
+    ACTIVE: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+    COMPLETED: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    UPCOMING: "bg-muted text-muted-foreground",
+  };
+  return (
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${styles[state]}`}>
+      {state.toLowerCase()}
+    </span>
   );
 }

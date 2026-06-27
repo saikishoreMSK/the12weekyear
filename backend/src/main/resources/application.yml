@@ -13,12 +13,16 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      # `update` lets Hibernate create/evolve the schema in dev and on first deploy.
-      # Switch to `validate` + Flyway migrations before production hardening.
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      # Flyway owns the schema now; Hibernate only validates that the entities match it.
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     properties:
       hibernate:
         format_sql: true
+
+  flyway:
+    # An existing database (previously managed by ddl-auto) is baselined at V1 and left untouched;
+    # a fresh database gets the full schema from V1. New changes go in V2, V3, ... migrations.
+    baseline-on-migrate: true
 
 server:
   # Render injects PORT; fall back to SERVER_PORT, then 8080 for local runs.

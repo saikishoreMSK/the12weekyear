@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/** Weekly reviews nested under a cycle. */
+/** Weekly reviews nested under a quarter. */
 @RestController
-@RequestMapping("/api/v1/cycles/{cycleId}/reviews")
+@RequestMapping("/api/v1/quarters/{quarterId}/reviews")
 public class WeeklyReviewController {
 
     private final WeeklyReviewService reviewService;
@@ -31,25 +31,25 @@ public class WeeklyReviewController {
     @GetMapping
     public ApiResponse<List<WeeklyReviewResponse>> list(
             @AuthenticationPrincipal AuthUser user,
-            @PathVariable UUID cycleId) {
-        return ApiResponse.success(reviewService.list(user.id(), cycleId));
+            @PathVariable UUID quarterId) {
+        return ApiResponse.success(reviewService.list(user.id(), quarterId));
     }
 
     @GetMapping("/{weekNumber}")
     public ApiResponse<WeeklyReviewResponse> get(
             @AuthenticationPrincipal AuthUser user,
-            @PathVariable UUID cycleId,
+            @PathVariable UUID quarterId,
             @PathVariable int weekNumber) {
-        return ApiResponse.success(reviewService.get(user.id(), cycleId, weekNumber));
+        return ApiResponse.success(reviewService.get(user.id(), quarterId, weekNumber));
     }
 
     /** Create or update the review for a week. */
     @PutMapping("/{weekNumber}")
     public ApiResponse<WeeklyReviewResponse> upsert(
             @AuthenticationPrincipal AuthUser user,
-            @PathVariable UUID cycleId,
+            @PathVariable UUID quarterId,
             @PathVariable int weekNumber,
             @Valid @RequestBody WeeklyReviewRequest request) {
-        return ApiResponse.success(reviewService.upsert(user.id(), cycleId, weekNumber, request));
+        return ApiResponse.success(reviewService.upsert(user.id(), quarterId, weekNumber, request));
     }
 }

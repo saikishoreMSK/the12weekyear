@@ -183,6 +183,21 @@ wrapper cache rather than the `mvnw` bootstrap.
   `register` now returns `{ email, verificationRequired }`. Frontend: `/verify-email`,
   `/forgot-password`, `/reset-password` with resend countdowns.
 
-**All six core features + polish + email OTP are implemented.** Remaining future work: Flyway
-migrations + `validate` before production, an offline service worker, recurring-pattern analytics
-over stored weekly reviews, and a scheduled cleanup of expired OTP rows.
+- **Flyway adopted.** Versioned migrations under `db/migration` (`V1` baseline, `V2` quarters);
+  `ddl-auto=validate`; existing DBs baseline V1 and skip it.
+- **Phase 9 — Calendar Quarters: complete.** Replaced the floating 84-day `Cycle` with a
+  **`Quarter`** keyed by `(userId, year, quarterNumber 1–4)` — dates, day-of-quarter, week (1–13)
+  and state (UPCOMING/ACTIVE/COMPLETED) are all **derived from the calendar** (`QuarterMath`,
+  leap-year aware); no stored status. The dashboard is now a **2×2 year grid** of the four
+  quarters (each tile state-aware with its score, or a "Plan" CTA), with prev/next-year nav.
+  Added **goal pacing** (Ahead / On track / Behind vs. time elapsed) and an **end-of-quarter
+  report** (`GET /quarters/{id}/report`). Goals & weekly reviews repointed to `quarterId`
+  (reviews now 1–13). `V2` migration drops the old cycle tables and creates quarters (dev data
+  reset; habits/users/analytics retained). App name unchanged.
+
+  Contract: `GET /api/v1/dashboard?year=` (year grid) · `POST/GET/PATCH/DELETE /api/v1/quarters` ·
+  `GET /api/v1/quarters/{id}/report` · nested `/quarters/{id}/goals…` and `/reviews/{week}`.
+
+**All core features + polish + email OTP + calendar quarters are implemented.** Remaining optional
+work: an offline service worker, recurring-pattern analytics over weekly reviews, and scheduled
+cleanup of expired OTP rows.

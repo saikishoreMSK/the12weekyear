@@ -14,6 +14,9 @@ spring:
       hibernate:
         boot:
           allow_jdbc_metadata_access: true
+  flyway:
+    # Tests build the schema from entities on H2; the Postgres migrations don't run here.
+    enabled: false
 
 app:
   cors:

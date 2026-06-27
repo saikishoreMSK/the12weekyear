@@ -17,18 +17,18 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * A reflection for one week of a cycle. Keyed by {@code (cycleId, weekNumber)} — at most one per
+ * A reflection for one week of a quarter. Keyed by {@code (quarterId, weekNumber)} — at most one per
  * week. {@code userId} is denormalised so future analytics can scan all of a user's reviews for
- * recurring patterns without joining through cycles.
+ * recurring patterns without joining through quarters.
  */
 @Entity
 @Table(
         name = "weekly_reviews",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_review_cycle_week",
-                columnNames = {"cycle_id", "week_number"}),
+                name = "uq_review_quarter_week",
+                columnNames = {"quarter_id", "week_number"}),
         indexes = {
-                @Index(name = "idx_review_cycle", columnList = "cycle_id"),
+                @Index(name = "idx_review_quarter", columnList = "quarter_id"),
                 @Index(name = "idx_review_user", columnList = "user_id")
         })
 @EntityListeners(AuditingEntityListener.class)
@@ -41,8 +41,8 @@ public class WeeklyReview {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "cycle_id", nullable = false)
-    private UUID cycleId;
+    @Column(name = "quarter_id", nullable = false)
+    private UUID quarterId;
 
     @Column(name = "week_number", nullable = false)
     private int weekNumber;
@@ -83,12 +83,12 @@ public class WeeklyReview {
         this.userId = userId;
     }
 
-    public UUID getCycleId() {
-        return cycleId;
+    public UUID getQuarterId() {
+        return quarterId;
     }
 
-    public void setCycleId(UUID cycleId) {
-        this.cycleId = cycleId;
+    public void setQuarterId(UUID quarterId) {
+        this.quarterId = quarterId;
     }
 
     public int getWeekNumber() {
