@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { habitApi } from "@/features/habit/api";
-import type { Habit } from "@/features/habit/types";
-import { useOptimisticHabits } from "@/features/habit/use-optimistic-habits";
+import { useHabits, useHabitActions } from "@/features/habit/queries";
 import { AddHabitForm } from "@/features/habit/components/add-habit-form";
 import { HabitItem } from "@/features/habit/components/habit-item";
 import { ArchivedHabitItem } from "@/features/habit/components/archived-habit-item";
@@ -26,28 +24,9 @@ function dayLabel(iso: string): string {
 }
 
 export default function HabitsPage() {
-  const { habits, setHabits, toggle, syncError } = useOptimisticHabits();
-  const [error, setError] = useState(false);
+  const { data: habits, isLoading, isError } = useHabits();
+  const actions = useHabitActions();
   const [selectedDate, setSelectedDate] = useState(TODAY);
-
-  useEffect(() => {
-    let active = true;
-    habitApi
-      .list()
-      .then((data) => active && setHabits(data))
-      .catch(() => active && setError(true));
-    return () => {
-      active = false;
-    };
-  }, [setHabits]);
-
-  function upsert(updated: Habit) {
-    setHabits((prev) => (prev ? prev.map((h) => (h.id === updated.id ? updated : h)) : prev));
-  }
-
-  function removeHabit(id: string) {
-    setHabits((prev) => (prev ? prev.filter((h) => h.id !== id) : prev));
-  }
 
   const active = habits?.filter((h) => h.active) ?? [];
   const archived = habits?.filter((h) => !h.active) ?? [];
@@ -64,17 +43,12 @@ export default function HabitsPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Habits</h1>
-          <AddHabitForm onAdded={(h) => setHabits((prev) => [...(prev ?? []), h])} />
+          <AddHabitForm onAdded={actions.add} />
         </div>
 
-        {error && <p className="text-destructive mt-6 text-sm">Couldn&apos;t load your habits.</p>}
-        {syncError && (
-          <p className="text-destructive mt-4 text-xs">
-            A change didn&apos;t sync — refresh to make sure everything saved.
-          </p>
-        )}
+        {isError && <p className="text-destructive mt-6 text-sm">Couldn&apos;t load your habits.</p>}
 
-        {habits === null && !error && (
+        {isLoading && (
           <div className="mt-6 space-y-3">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-[72px] w-full" />
@@ -106,7 +80,7 @@ export default function HabitsPage() {
                     habit={habit}
                     selectedDate={selectedDate}
                     disabled={selectedDate > TODAY}
-                    onToggle={toggle}
+                    onToggle={actions.toggle}
                   />
                 ))
               )}
@@ -122,8 +96,8 @@ export default function HabitsPage() {
                     <ArchivedHabitItem
                       key={habit.id}
                       habit={habit}
-                      onChanged={upsert}
-                      onDeleted={removeHabit}
+                      onChanged={actions.update}
+                      onDeleted={actions.remove}
                     />
                   ))}
                 </div>

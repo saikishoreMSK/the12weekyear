@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { quarterApi } from "@/features/quarter/api";
-import type { QuarterTile, YearDashboard } from "@/features/quarter/types";
+import type { QuarterTile } from "@/features/quarter/types";
+import { useDashboard } from "@/features/quarter/queries";
 import { AppHeader } from "@/components/app-header";
 import { QuoteCard } from "@/components/quote-card";
 import { FadeIn } from "@/components/motion";
@@ -16,21 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const [data, setData] = useState<YearDashboard | null>(null);
-  const [error, setError] = useState(false);
-
-  const load = useCallback(() => {
-    setData(null);
-    setError(false);
-    quarterApi
-      .dashboard(year)
-      .then(setData)
-      .catch(() => setError(true));
-  }, [year]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, isError: error } = useDashboard(year);
 
   return (
     <div className="flex min-h-dvh flex-col">

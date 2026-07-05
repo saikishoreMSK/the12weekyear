@@ -1,18 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { quarterApi } from "@/features/quarter/api";
-import type { Quarter } from "@/features/quarter/types";
+import { useCurrentQuarter } from "@/features/quarter/queries";
 import { GoalItem } from "@/features/quarter/components/goal-item";
 import { AddGoalForm } from "@/features/quarter/components/add-goal-form";
 import { weekDates, weekRangeLabel } from "@/features/quarter/week-dates";
-import { habitApi } from "@/features/habit/api";
-import { useOptimisticHabits } from "@/features/habit/use-optimistic-habits";
+import { useHabits, useHabitActions } from "@/features/habit/queries";
 import { HabitWeekGrid } from "@/features/habit/components/habit-week-grid";
 import { RequireAuth } from "@/features/auth/components/require-auth";
-import { ApiException } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/motion";
@@ -20,26 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function WeekView() {
-  const [quarter, setQuarter] = useState<Quarter | null>(null);
-  const { habits, setHabits, toggle } = useOptimisticHabits();
-  const [notPlanned, setNotPlanned] = useState(false);
-  const [error, setError] = useState(false);
+  const { data: quarter, isError: notPlanned, refetch } = useCurrentQuarter();
+  const { data: habits } = useHabits();
+  const { toggle } = useHabitActions();
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
-
-  const loadQuarter = useCallback(() => {
-    quarterApi
-      .current()
-      .then(setQuarter)
-      .catch((err) => {
-        if (err instanceof ApiException && err.status === 404) setNotPlanned(true);
-        else setError(true);
-      });
-  }, []);
-
-  useEffect(() => {
-    loadQuarter();
-    habitApi.list().then(setHabits).catch(() => setError(true));
-  }, [loadQuarter, setHabits]);
 
   // Default the selected week to the quarter's current week once it loads.
   useEffect(() => {
@@ -52,8 +33,6 @@ function WeekView() {
     <div className="flex min-h-dvh flex-col">
       <AppHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
-        {error && <p className="text-destructive text-sm">Couldn&apos;t load this week.</p>}
-
         {notPlanned && (
           <div className="py-16 text-center">
             <h1 className="text-lg font-semibold">No quarter planned yet</h1>
@@ -64,14 +43,14 @@ function WeekView() {
           </div>
         )}
 
-        {!notPlanned && !error && (!quarter || !habits || selectedWeek === null) && (
+        {!notPlanned && (!quarter || selectedWeek === null) && (
           <>
             <Skeleton className="h-7 w-40" />
             <Skeleton className="mt-4 h-24 w-full" />
           </>
         )}
 
-        {quarter && habits && selectedWeek !== null && !notPlanned && (
+        {quarter && selectedWeek !== null && !notPlanned && (
           <FadeIn className="space-y-6">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
@@ -117,7 +96,7 @@ function WeekView() {
                     quarterStart={quarter.startDate}
                     quarterEnd={quarter.endDate}
                     goal={goal}
-                    onChanged={loadQuarter}
+                    onChanged={() => refetch()}
                   />
                 ) : (
                   <AddGoalForm
@@ -127,7 +106,7 @@ function WeekView() {
                     totalWeeks={quarter.totalWeeks}
                     takenWeeks={quarter.goals.map((g) => g.week)}
                     defaultWeek={selectedWeek}
-                    onAdded={loadQuarter}
+                    onAdded={() => refetch()}
                   />
                 );
               })()}

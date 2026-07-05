@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { analyticsApi } from "@/features/analytics/api";
-import type { Analytics } from "@/features/analytics/types";
+import { useAnalytics } from "@/features/analytics/queries";
 import { ContributionHeatmap } from "@/features/analytics/components/contribution-heatmap";
 import { WeekdayBars } from "@/features/analytics/components/weekday-bars";
 import { AppHeader } from "@/components/app-header";
@@ -17,19 +14,7 @@ function formatDay(day: string | null): string {
 }
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<Analytics | null>(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    analyticsApi
-      .get()
-      .then((d) => active && setData(d))
-      .catch(() => active && setError(true));
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { data, isError: error } = useAnalytics();
 
   return (
     <div className="flex min-h-dvh flex-col">

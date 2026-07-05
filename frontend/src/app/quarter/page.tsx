@@ -1,32 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { quarterApi } from "@/features/quarter/api";
+import { useCurrentQuarter } from "@/features/quarter/queries";
 import { RequireAuth } from "@/features/auth/components/require-auth";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 
 function CurrentQuarterResolver() {
   const router = useRouter();
-  const [notPlanned, setNotPlanned] = useState(false);
+  const { data, isError: notPlanned } = useCurrentQuarter();
 
   useEffect(() => {
-    let active = true;
-    quarterApi
-      .current()
-      .then((q) => {
-        if (active) router.replace(`/quarters/${q.id}`);
-      })
-      .catch(() => {
-        if (active) setNotPlanned(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [router]);
+    if (data) router.replace(`/quarters/${data.id}`);
+  }, [data, router]);
 
   return (
     <div className="flex min-h-dvh flex-col">
