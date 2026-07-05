@@ -1,32 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { quarterApi } from "@/features/quarter/api";
 import type { Quarter } from "@/features/quarter/types";
 import { GoalItem } from "@/features/quarter/components/goal-item";
 import { AddGoalForm } from "@/features/quarter/components/add-goal-form";
+import { weekDates, weekRangeLabel } from "@/features/quarter/week-dates";
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
-import { HabitItem } from "@/features/habit/components/habit-item";
-import { WeekStrip } from "@/features/habit/components/week-strip";
+import { HabitWeekGrid } from "@/features/habit/components/habit-week-grid";
 import { RequireAuth } from "@/features/auth/components/require-auth";
 import { ApiException } from "@/lib/api/client";
-import { toIsoDate } from "@/lib/date";
+import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const TODAY = toIsoDate(new Date());
 
 function WeekView() {
   const [quarter, setQuarter] = useState<Quarter | null>(null);
   const [habits, setHabits] = useState<Habit[] | null>(null);
   const [notPlanned, setNotPlanned] = useState(false);
   const [error, setError] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(TODAY);
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
 
   const loadQuarter = useCallback(() => {
     quarterApi
@@ -43,21 +41,21 @@ function WeekView() {
     habitApi.list().then(setHabits).catch(() => setError(true));
   }, [loadQuarter]);
 
+  // Default the selected week to the quarter's current week once it loads.
+  useEffect(() => {
+    if (quarter && selectedWeek === null) setSelectedWeek(quarter.currentWeek ?? 1);
+  }, [quarter, selectedWeek]);
+
   function upsertHabit(updated: Habit) {
     setHabits((hs) => hs?.map((h) => (h.id === updated.id ? updated : h)) ?? null);
   }
 
-  const activeHabits = habits?.filter((h) => h.active) ?? [];
-  const activeDays = useMemo(() => {
-    const set = new Set<string>();
-    activeHabits.forEach((h) => h.completionDates.forEach((d) => set.add(d)));
-    return set;
-  }, [activeHabits]);
+  async function toggle(habit: Habit, iso: string) {
+    const done = habit.completionDates.includes(iso);
+    upsertHabit(done ? await habitApi.unmarkDate(habit.id, iso) : await habitApi.markDate(habit.id, iso));
+  }
 
-  const currentWeekGoal =
-    quarter && quarter.currentWeek != null
-      ? quarter.goals.find((g) => g.week === quarter.currentWeek)
-      : undefined;
+  const activeHabits = habits?.filter((h) => h.active) ?? [];
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -75,58 +73,85 @@ function WeekView() {
           </div>
         )}
 
-        {!notPlanned && !error && (!quarter || !habits) && (
+        {!notPlanned && !error && (!quarter || !habits || selectedWeek === null) && (
           <>
             <Skeleton className="h-7 w-40" />
             <Skeleton className="mt-4 h-24 w-full" />
           </>
         )}
 
-        {quarter && habits && !notPlanned && (
+        {quarter && habits && selectedWeek !== null && !notPlanned && (
           <FadeIn className="space-y-6">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Week {quarter.currentWeek} / {quarter.totalWeeks}
+                Week {selectedWeek}
+                {quarter.currentWeek === selectedWeek && (
+                  <span className="text-muted-foreground ml-2 align-middle text-sm font-normal">this week</span>
+                )}
               </h1>
               <p className="text-muted-foreground text-sm">
-                Q{quarter.quarterNumber} · {quarter.label} {quarter.year}
+                {weekRangeLabel(quarter.startDate, quarter.endDate, selectedWeek)} · Q{quarter.quarterNumber}{" "}
+                {quarter.year}
               </p>
             </div>
 
+            {/* Quarter-week selector */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {Array.from({ length: quarter.totalWeeks }, (_, i) => i + 1).map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setSelectedWeek(w)}
+                  className={cn(
+                    "flex size-9 shrink-0 items-center justify-center rounded-md border text-sm tabular-nums transition-colors",
+                    w === selectedWeek
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input hover:bg-accent",
+                    quarter.currentWeek === w && w !== selectedWeek ? "ring-primary/40 ring-2" : "",
+                  )}
+                  aria-label={`Week ${w}`}
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
+
             <section>
-              <h2 className="mb-2 text-lg font-semibold">This week&apos;s goal</h2>
-              {currentWeekGoal ? (
-                <GoalItem quarterId={quarter.id} goal={currentWeekGoal} onChanged={loadQuarter} />
-              ) : (
-                <AddGoalForm
-                  quarterId={quarter.id}
-                  totalWeeks={quarter.totalWeeks}
-                  takenWeeks={quarter.goals.map((g) => g.week)}
-                  defaultWeek={quarter.currentWeek ?? 1}
-                  onAdded={loadQuarter}
-                />
-              )}
+              <h2 className="mb-2 text-lg font-semibold">Week {selectedWeek} goal</h2>
+              {(() => {
+                const goal = quarter.goals.find((g) => g.week === selectedWeek);
+                return goal ? (
+                  <GoalItem
+                    quarterId={quarter.id}
+                    quarterStart={quarter.startDate}
+                    quarterEnd={quarter.endDate}
+                    goal={goal}
+                    onChanged={loadQuarter}
+                  />
+                ) : (
+                  <AddGoalForm
+                    quarterId={quarter.id}
+                    quarterStart={quarter.startDate}
+                    quarterEnd={quarter.endDate}
+                    totalWeeks={quarter.totalWeeks}
+                    takenWeeks={quarter.goals.map((g) => g.week)}
+                    defaultWeek={selectedWeek}
+                    onAdded={loadQuarter}
+                  />
+                );
+              })()}
             </section>
 
             <section>
-              <h2 className="mb-2 text-lg font-semibold">Habits</h2>
+              <h2 className="mb-2 text-lg font-semibold">Habit completion</h2>
               {activeHabits.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No habits yet.</p>
               ) : (
-                <>
-                  <WeekStrip selected={selectedDate} onSelect={setSelectedDate} activeDays={activeDays} />
-                  <div className="mt-3 space-y-3">
-                    {activeHabits.map((habit) => (
-                      <HabitItem
-                        key={habit.id}
-                        habit={habit}
-                        selectedDate={selectedDate}
-                        disabled={selectedDate > TODAY}
-                        onChanged={upsertHabit}
-                      />
-                    ))}
-                  </div>
-                </>
+                <HabitWeekGrid
+                  habits={activeHabits}
+                  days={weekDates(quarter.startDate, quarter.endDate, selectedWeek)}
+                  onToggle={toggle}
+                />
               )}
             </section>
 

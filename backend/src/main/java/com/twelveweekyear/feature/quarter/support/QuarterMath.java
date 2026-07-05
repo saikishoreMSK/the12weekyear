@@ -8,6 +8,9 @@ import java.time.temporal.ChronoUnit;
 /** Calendar math for quarters: bounds, day/week-of-quarter, and state. Pure & tested. */
 public final class QuarterMath {
 
+    /** A quarter is treated as at most 13 weeks; the last week absorbs the extra 1–2 days. */
+    public static final int MAX_WEEKS = 13;
+
     private QuarterMath() {
     }
 
@@ -33,7 +36,7 @@ public final class QuarterMath {
     }
 
     public static int totalWeeks(int totalDays) {
-        return (int) Math.ceil(totalDays / 7.0);
+        return Math.min(MAX_WEEKS, (int) Math.ceil(totalDays / 7.0));
     }
 
     public static Progress progress(int year, int quarterNumber, LocalDate today) {
@@ -48,7 +51,7 @@ public final class QuarterMath {
         }
         long dayIndex = ChronoUnit.DAYS.between(b.start(), today); // 0-based
         int currentDay = (int) dayIndex + 1;
-        int currentWeek = (int) (dayIndex / 7) + 1;
+        int currentWeek = Math.min(MAX_WEEKS, (int) (dayIndex / 7) + 1);
         return new Progress(QuarterState.ACTIVE, currentDay, currentWeek, b.totalDays(), totalWeeks);
     }
 }

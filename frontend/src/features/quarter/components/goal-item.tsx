@@ -5,11 +5,14 @@ import { Check } from "lucide-react";
 
 import { quarterApi } from "@/features/quarter/api";
 import type { Goal, GoalStatus } from "@/features/quarter/types";
+import { weekRangeLabel } from "@/features/quarter/week-dates";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   quarterId: string;
+  quarterStart: string;
+  quarterEnd: string;
   goal: Goal;
   onChanged: () => void;
 }
@@ -25,8 +28,9 @@ function StatusChip({ status }: { status: GoalStatus }) {
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
 }
 
-export function GoalItem({ quarterId, goal, onChanged }: Props) {
+export function GoalItem({ quarterId, quarterStart, quarterEnd, goal, onChanged }: Props) {
   const [busy, setBusy] = useState(false);
+  const range = weekRangeLabel(quarterStart, quarterEnd, goal.week);
 
   async function toggleDone() {
     setBusy(true);
@@ -70,7 +74,10 @@ export function GoalItem({ quarterId, goal, onChanged }: Props) {
         <p className={cn("truncate text-sm font-medium", goal.done && "text-muted-foreground line-through")}>
           {goal.title}
         </p>
-        <p className="text-muted-foreground text-xs">Week {goal.week}</p>
+        <p className="text-muted-foreground text-xs">
+          Week {goal.week}
+          {range && ` (${range})`}
+        </p>
       </div>
 
       <StatusChip status={goal.status} />

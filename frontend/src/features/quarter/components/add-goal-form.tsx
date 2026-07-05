@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { quarterApi } from "@/features/quarter/api";
+import { weekRangeLabel } from "@/features/quarter/week-dates";
 import { ApiException } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,8 @@ import { Label } from "@/components/ui/label";
 
 interface Props {
   quarterId: string;
+  quarterStart: string;
+  quarterEnd: string;
   totalWeeks: number;
   /** Weeks that already have a goal (excluded from the picker — one goal per week). */
   takenWeeks: number[];
@@ -19,7 +22,15 @@ interface Props {
 }
 
 /** Add a weekly goal: just a title and which week it belongs to. */
-export function AddGoalForm({ quarterId, totalWeeks, takenWeeks, defaultWeek, onAdded }: Props) {
+export function AddGoalForm({
+  quarterId,
+  quarterStart,
+  quarterEnd,
+  totalWeeks,
+  takenWeeks,
+  defaultWeek,
+  onAdded,
+}: Props) {
   const available = Array.from({ length: totalWeeks }, (_, i) => i + 1).filter(
     (w) => !takenWeeks.includes(w),
   );
@@ -81,11 +92,11 @@ export function AddGoalForm({ quarterId, totalWeeks, takenWeeks, defaultWeek, on
           id="g-week"
           value={week}
           onChange={(e) => setWeek(Number(e.target.value))}
-          className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="border-input bg-background text-foreground h-9 w-full rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           {available.map((w) => (
-            <option key={w} value={w}>
-              Week {w}
+            <option key={w} value={w} className="bg-background text-foreground">
+              Week {w} ({weekRangeLabel(quarterStart, quarterEnd, w)})
             </option>
           ))}
         </select>

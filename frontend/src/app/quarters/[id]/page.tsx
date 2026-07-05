@@ -120,6 +120,8 @@ export default function QuarterDetailPage() {
             <h2 className="text-lg font-semibold">Weekly goals</h2>
             <AddGoalForm
               quarterId={quarter.id}
+              quarterStart={quarter.startDate}
+              quarterEnd={quarter.endDate}
               totalWeeks={quarter.totalWeeks}
               takenWeeks={quarter.goals.map((g) => g.week)}
               onAdded={load}
@@ -132,7 +134,14 @@ export default function QuarterDetailPage() {
           ) : (
             <div className="space-y-3">
               {quarter.goals.map((goal) => (
-                <GoalItem key={goal.id} quarterId={quarter.id} goal={goal} onChanged={load} />
+                <GoalItem
+                  key={goal.id}
+                  quarterId={quarter.id}
+                  quarterStart={quarter.startDate}
+                  quarterEnd={quarter.endDate}
+                  goal={goal}
+                  onChanged={load}
+                />
               ))}
             </div>
           )}
