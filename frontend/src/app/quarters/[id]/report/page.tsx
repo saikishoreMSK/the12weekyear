@@ -85,12 +85,9 @@ export default function QuarterReportPage() {
                       >
                         {g.met ? <Check className="size-3.5" /> : <X className="size-3.5" />}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm">
-                        <span className="text-muted-foreground">{g.category}: </span>
-                        {g.title}
-                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm">{g.title}</span>
                       <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                        {g.currentValue}/{g.targetValue} {g.unit}
+                        Week {g.week}
                       </span>
                     </div>
                   ))}

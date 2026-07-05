@@ -1,20 +1,15 @@
 package com.twelveweekyear.feature.quarter.dto;
 
-import com.twelveweekyear.feature.quarter.domain.GoalPace;
+import com.twelveweekyear.feature.quarter.domain.GoalStatus;
 
 import java.util.UUID;
 
 public record GoalResponse(
         UUID id,
-        String category,
         String title,
-        String unit,
-        int targetValue,
-        int currentValue,
-        int progressPercent,
-        int weekStart,
-        int weekEnd,
-        /** AHEAD / ON_TRACK / BEHIND vs. time elapsed — null unless the quarter is active. */
-        GoalPace pace
+        int week,
+        boolean done,
+        /** DONE / THIS_WEEK / UPCOMING / MISSED relative to today. */
+        GoalStatus status
 ) {
 }

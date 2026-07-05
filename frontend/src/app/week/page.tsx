@@ -1,40 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { quarterApi } from "@/features/quarter/api";
 import type { Quarter } from "@/features/quarter/types";
 import { GoalItem } from "@/features/quarter/components/goal-item";
+import { AddGoalForm } from "@/features/quarter/components/add-goal-form";
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
+import { HabitItem } from "@/features/habit/components/habit-item";
+import { WeekStrip } from "@/features/habit/components/week-strip";
 import { RequireAuth } from "@/features/auth/components/require-auth";
 import { ApiException } from "@/lib/api/client";
-import { parseIsoDate, toIsoDate } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { toIsoDate } from "@/lib/date";
 import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-function weekDays(quarter: Quarter): Date[] {
-  const start = parseIsoDate(quarter.startDate);
-  const weekStart = new Date(start);
-  weekStart.setDate(start.getDate() + ((quarter.currentWeek ?? 1) - 1) * 7);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
-}
+const TODAY = toIsoDate(new Date());
 
 function WeekView() {
   const [quarter, setQuarter] = useState<Quarter | null>(null);
   const [habits, setHabits] = useState<Habit[] | null>(null);
   const [notPlanned, setNotPlanned] = useState(false);
   const [error, setError] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(TODAY);
 
   const loadQuarter = useCallback(() => {
     quarterApi
@@ -51,13 +43,21 @@ function WeekView() {
     habitApi.list().then(setHabits).catch(() => setError(true));
   }, [loadQuarter]);
 
-  async function toggle(habit: Habit, iso: string) {
-    const done = habit.completionDates.includes(iso);
-    const updated = done
-      ? await habitApi.unmarkDate(habit.id, iso)
-      : await habitApi.markDate(habit.id, iso);
-    setHabits((hs) => hs?.map((h) => (h.id === habit.id ? updated : h)) ?? null);
+  function upsertHabit(updated: Habit) {
+    setHabits((hs) => hs?.map((h) => (h.id === updated.id ? updated : h)) ?? null);
   }
+
+  const activeHabits = habits?.filter((h) => h.active) ?? [];
+  const activeDays = useMemo(() => {
+    const set = new Set<string>();
+    activeHabits.forEach((h) => h.completionDates.forEach((d) => set.add(d)));
+    return set;
+  }, [activeHabits]);
+
+  const currentWeekGoal =
+    quarter && quarter.currentWeek != null
+      ? quarter.goals.find((g) => g.week === quarter.currentWeek)
+      : undefined;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -84,19 +84,49 @@ function WeekView() {
 
         {quarter && habits && !notPlanned && (
           <FadeIn className="space-y-6">
-            <WeekHeader quarter={quarter} />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Week {quarter.currentWeek} / {quarter.totalWeeks}
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Q{quarter.quarterNumber} · {quarter.label} {quarter.year}
+              </p>
+            </div>
 
             <section>
-              <h2 className="mb-2 text-lg font-semibold">This week&apos;s goals</h2>
-              <ActiveGoals quarter={quarter} onChanged={loadQuarter} />
+              <h2 className="mb-2 text-lg font-semibold">This week&apos;s goal</h2>
+              {currentWeekGoal ? (
+                <GoalItem quarterId={quarter.id} goal={currentWeekGoal} onChanged={loadQuarter} />
+              ) : (
+                <AddGoalForm
+                  quarterId={quarter.id}
+                  totalWeeks={quarter.totalWeeks}
+                  takenWeeks={quarter.goals.map((g) => g.week)}
+                  defaultWeek={quarter.currentWeek ?? 1}
+                  onAdded={loadQuarter}
+                />
+              )}
             </section>
 
             <section>
               <h2 className="mb-2 text-lg font-semibold">Habits</h2>
-              {habits.length === 0 ? (
+              {activeHabits.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No habits yet.</p>
               ) : (
-                <HabitGrid quarter={quarter} habits={habits} onToggle={toggle} />
+                <>
+                  <WeekStrip selected={selectedDate} onSelect={setSelectedDate} activeDays={activeDays} />
+                  <div className="mt-3 space-y-3">
+                    {activeHabits.map((habit) => (
+                      <HabitItem
+                        key={habit.id}
+                        habit={habit}
+                        selectedDate={selectedDate}
+                        disabled={selectedDate > TODAY}
+                        onChanged={upsertHabit}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </section>
 
@@ -106,91 +136,6 @@ function WeekView() {
           </FadeIn>
         )}
       </main>
-    </div>
-  );
-}
-
-function WeekHeader({ quarter }: { quarter: Quarter }) {
-  const days = weekDays(quarter);
-  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
-  return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight">
-        Week {quarter.currentWeek} / {quarter.totalWeeks}
-      </h1>
-      <p className="text-muted-foreground text-sm">
-        {fmt(days[0])} – {fmt(days[6])} · Q{quarter.quarterNumber} {quarter.year}
-      </p>
-    </div>
-  );
-}
-
-function ActiveGoals({ quarter, onChanged }: { quarter: Quarter; onChanged: () => void }) {
-  const week = quarter.currentWeek ?? 0;
-  const active = quarter.goals.filter((g) => week >= g.weekStart && week <= g.weekEnd);
-  if (active.length === 0) {
-    return <p className="text-muted-foreground text-sm">No goals scheduled for this week.</p>;
-  }
-  return (
-    <div className="space-y-3">
-      {active.map((goal) => (
-        <GoalItem key={goal.id} quarterId={quarter.id} goal={goal} onChanged={onChanged} />
-      ))}
-    </div>
-  );
-}
-
-function HabitGrid({
-  quarter,
-  habits,
-  onToggle,
-}: {
-  quarter: Quarter;
-  habits: Habit[];
-  onToggle: (habit: Habit, iso: string) => void;
-}) {
-  const days = weekDays(quarter);
-  const todayIso = toIsoDate(new Date());
-
-  return (
-    <div className="bg-card overflow-x-auto rounded-lg border p-4">
-      <div className="flex items-center gap-1 pl-[40%]">
-        {days.map((d) => (
-          <div key={d.toISOString()} className="text-muted-foreground w-8 text-center text-xs">
-            {DOW[d.getDay()]}
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 space-y-2">
-        {habits.map((habit) => (
-          <div key={habit.id} className="flex items-center gap-1">
-            <span className="w-[40%] truncate pr-2 text-sm font-medium">{habit.name}</span>
-            {days.map((d) => {
-              const iso = toIsoDate(d);
-              const done = habit.completionDates.includes(iso);
-              const future = iso > todayIso;
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  disabled={future}
-                  onClick={() => onToggle(habit, iso)}
-                  aria-label={`${habit.name} ${iso}`}
-                  className={cn(
-                    "size-8 rounded-md border text-xs transition-colors",
-                    done
-                      ? "border-emerald-500 bg-emerald-500 text-white"
-                      : "border-input hover:bg-accent",
-                    future && "cursor-not-allowed opacity-30",
-                  )}
-                >
-                  {d.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

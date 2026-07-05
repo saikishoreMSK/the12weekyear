@@ -39,6 +39,11 @@ export default function HabitDetailPage() {
     setEditing(false);
   }
 
+  async function toggleArchive() {
+    if (!habit) return;
+    setHabit(await habitApi.update(habit.id, { active: !habit.active }));
+  }
+
   async function remove() {
     if (!habit) return;
     if (!window.confirm("Delete this habit and its history? This can't be undone.")) return;
@@ -69,11 +74,22 @@ export default function HabitDetailPage() {
           </div>
         )}
         {!editing && (
-          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-            Rename
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+              Rename
+            </Button>
+            <Button size="sm" variant="outline" onClick={toggleArchive}>
+              {habit.active ? "Archive" : "Resume"}
+            </Button>
+          </div>
         )}
       </div>
+
+      {!habit.active && (
+        <p className="mt-3 rounded-md bg-muted px-3 py-2 text-muted-foreground text-xs">
+          This habit is archived — it&apos;s hidden from your daily tracker until you resume it.
+        </p>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Current streak" value={`${habit.currentStreak}`} suffix="days" />

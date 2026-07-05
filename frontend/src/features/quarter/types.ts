@@ -1,17 +1,12 @@
 export type QuarterState = "UPCOMING" | "ACTIVE" | "COMPLETED";
-export type GoalPace = "AHEAD" | "ON_TRACK" | "BEHIND";
+export type GoalStatus = "DONE" | "THIS_WEEK" | "UPCOMING" | "MISSED";
 
 export interface Goal {
   id: string;
-  category: string;
   title: string;
-  unit: string;
-  targetValue: number;
-  currentValue: number;
-  progressPercent: number;
-  weekStart: number;
-  weekEnd: number;
-  pace: GoalPace | null;
+  week: number;
+  done: boolean;
+  status: GoalStatus;
 }
 
 export interface QuarterHabit {
@@ -76,31 +71,19 @@ export interface UpdateQuarterInput {
 }
 
 export interface CreateGoalInput {
-  category: string;
   title: string;
-  unit: string;
-  targetValue: number;
-  weekStart?: number;
-  weekEnd?: number;
+  week: number;
 }
 
 export interface UpdateGoalInput {
-  category?: string;
   title?: string;
-  unit?: string;
-  targetValue?: number;
-  currentValue?: number;
-  weekStart?: number;
-  weekEnd?: number;
+  week?: number;
+  done?: boolean;
 }
 
 export interface GoalOutcome {
-  category: string;
   title: string;
-  currentValue: number;
-  targetValue: number;
-  unit: string;
-  progressPercent: number;
+  week: number;
   met: boolean;
 }
 

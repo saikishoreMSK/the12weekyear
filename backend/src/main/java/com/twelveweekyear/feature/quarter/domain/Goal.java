@@ -16,9 +16,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * A measurable target within a {@link Quarter} (e.g. "Solve 28 DSA problems"). Tracked by
- * {@code currentValue} against {@code targetValue}; assigned to a week range within the quarter
- * (1..~13).
+ * A weekly goal within a {@link Quarter}: a single focus assigned to one week (1..~13) that is
+ * either done or not. One goal per week.
  */
 @Entity
 @Table(name = "goals", indexes = @Index(name = "idx_goal_quarter", columnList = "quarter_id"))
@@ -32,26 +31,15 @@ public class Goal {
     @Column(name = "quarter_id", nullable = false)
     private UUID quarterId;
 
-    @Column(nullable = false, length = 50)
-    private String category;
-
     @Column(nullable = false, length = 120)
     private String title;
 
-    @Column(nullable = false, length = 30)
-    private String unit;
+    /** Week of the quarter this goal belongs to (1..totalWeeks). */
+    @Column(nullable = false)
+    private int week;
 
-    @Column(name = "target_value", nullable = false)
-    private int targetValue;
-
-    @Column(name = "current_value", nullable = false)
-    private int currentValue;
-
-    @Column(name = "week_start", nullable = false)
-    private int weekStart;
-
-    @Column(name = "week_end", nullable = false)
-    private int weekEnd;
+    @Column(nullable = false)
+    private boolean done;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -77,14 +65,6 @@ public class Goal {
         this.quarterId = quarterId;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -93,44 +73,20 @@ public class Goal {
         this.title = title;
     }
 
-    public String getUnit() {
-        return unit;
+    public int getWeek() {
+        return week;
     }
 
-    public void setUnit(String unit) {
-        this.unit = unit;
+    public void setWeek(int week) {
+        this.week = week;
     }
 
-    public int getTargetValue() {
-        return targetValue;
+    public boolean isDone() {
+        return done;
     }
 
-    public void setTargetValue(int targetValue) {
-        this.targetValue = targetValue;
-    }
-
-    public int getCurrentValue() {
-        return currentValue;
-    }
-
-    public void setCurrentValue(int currentValue) {
-        this.currentValue = currentValue;
-    }
-
-    public int getWeekStart() {
-        return weekStart;
-    }
-
-    public void setWeekStart(int weekStart) {
-        this.weekStart = weekStart;
-    }
-
-    public int getWeekEnd() {
-        return weekEnd;
-    }
-
-    public void setWeekEnd(int weekEnd) {
-        this.weekEnd = weekEnd;
+    public void setDone(boolean done) {
+        this.done = done;
     }
 
     public Instant getCreatedAt() {

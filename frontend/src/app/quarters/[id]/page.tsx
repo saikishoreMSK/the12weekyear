@@ -117,12 +117,17 @@ export default function QuarterDetailPage() {
         {/* Goals */}
         <section>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Goals</h2>
-            <AddGoalForm quarterId={quarter.id} totalWeeks={quarter.totalWeeks} onAdded={load} />
+            <h2 className="text-lg font-semibold">Weekly goals</h2>
+            <AddGoalForm
+              quarterId={quarter.id}
+              totalWeeks={quarter.totalWeeks}
+              takenWeeks={quarter.goals.map((g) => g.week)}
+              onAdded={load}
+            />
           </div>
           {quarter.goals.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              No goals yet. Break your objective into measurable targets.
+              No goals yet. Add one focus per week.
             </p>
           ) : (
             <div className="space-y-3">

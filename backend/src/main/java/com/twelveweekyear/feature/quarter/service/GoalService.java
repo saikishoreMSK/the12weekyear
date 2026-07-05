@@ -15,10 +15,9 @@ import com.twelveweekyear.feature.user.service.UserTimeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
-/** Goals inside a quarter. All operations verify the quarter belongs to the caller. */
+/** Weekly goals inside a quarter — one goal per week. All operations verify quarter ownership. */
 @Service
 public class GoalService {
 
@@ -40,22 +39,16 @@ public class GoalService {
     @Transactional
     public GoalResponse addGoal(UUID userId, UUID quarterId, CreateGoalRequest request) {
         Quarter quarter = quarterService.requireOwnedQuarter(userId, quarterId);
-        int totalWeeks = QuarterMath.totalWeeks(
-                QuarterMath.bounds(quarter.getYear(), quarter.getQuarterNumber()).totalDays());
-
-        int weekStart = request.weekStart() != null ? request.weekStart() : 1;
-        int weekEnd = request.weekEnd() != null ? request.weekEnd() : totalWeeks;
-        requireValidWeekRange(weekStart, weekEnd);
+        requireWeekInRange(quarter, request.week());
+        if (goalRepository.existsByQuarterIdAndWeek(quarterId, request.week())) {
+            throw new AppException(ErrorCode.CONFLICT, "That week already has a goal");
+        }
 
         Goal goal = new Goal();
         goal.setQuarterId(quarterId);
-        goal.setCategory(request.category().trim());
         goal.setTitle(request.title().trim());
-        goal.setUnit(request.unit().trim());
-        goal.setTargetValue(request.targetValue());
-        goal.setCurrentValue(0);
-        goal.setWeekStart(weekStart);
-        goal.setWeekEnd(weekEnd);
+        goal.setWeek(request.week());
+        goal.setDone(false);
         goalRepository.save(goal);
 
         return toResponse(goal, quarter, userId);
@@ -67,15 +60,19 @@ public class GoalService {
         Goal goal = goalRepository.findByIdAndQuarterId(goalId, quarterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 
-        if (request.category() != null) goal.setCategory(request.category().trim());
-        if (request.title() != null) goal.setTitle(request.title().trim());
-        if (request.unit() != null) goal.setUnit(request.unit().trim());
-        if (request.targetValue() != null) goal.setTargetValue(request.targetValue());
-        if (request.currentValue() != null) goal.setCurrentValue(request.currentValue());
-        if (request.weekStart() != null) goal.setWeekStart(request.weekStart());
-        if (request.weekEnd() != null) goal.setWeekEnd(request.weekEnd());
-
-        requireValidWeekRange(goal.getWeekStart(), goal.getWeekEnd());
+        if (request.title() != null) {
+            goal.setTitle(request.title().trim());
+        }
+        if (request.week() != null && request.week() != goal.getWeek()) {
+            requireWeekInRange(quarter, request.week());
+            if (goalRepository.existsByQuarterIdAndWeek(quarterId, request.week())) {
+                throw new AppException(ErrorCode.CONFLICT, "That week already has a goal");
+            }
+            goal.setWeek(request.week());
+        }
+        if (request.done() != null) {
+            goal.setDone(request.done());
+        }
         return toResponse(goal, quarter, userId);
     }
 
@@ -87,17 +84,17 @@ public class GoalService {
         goalRepository.delete(goal);
     }
 
+    private void requireWeekInRange(Quarter quarter, int week) {
+        int totalWeeks = QuarterMath.totalWeeks(
+                QuarterMath.bounds(quarter.getYear(), quarter.getQuarterNumber()).totalDays());
+        if (week < 1 || week > totalWeeks) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Week must be between 1 and " + totalWeeks);
+        }
+    }
+
     private GoalResponse toResponse(Goal goal, Quarter quarter, UUID userId) {
         QuarterMath.Progress p = QuarterMath.progress(
                 quarter.getYear(), quarter.getQuarterNumber(), userTimeService.today(userId));
-        boolean active = p.currentDay() != null;
-        return quarterMapper.toGoalResponse(goal, active, active ? p.currentDay() : 0, p.totalDays());
-    }
-
-    private void requireValidWeekRange(int weekStart, int weekEnd) {
-        if (weekEnd < weekStart) {
-            throw new AppException(ErrorCode.VALIDATION_FAILED,
-                    "weekEnd must be greater than or equal to weekStart");
-        }
+        return quarterMapper.toGoalResponse(goal, p.state(), p.currentWeek());
     }
 }

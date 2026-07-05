@@ -7,7 +7,7 @@ import type { Habit } from "@/features/habit/types";
 import { AddHabitForm } from "@/features/habit/components/add-habit-form";
 import { HabitItem } from "@/features/habit/components/habit-item";
 import { ArchivedHabitItem } from "@/features/habit/components/archived-habit-item";
-import { DaySelector } from "@/features/habit/components/day-selector";
+import { WeekStrip } from "@/features/habit/components/week-strip";
 import { AppHeader } from "@/components/app-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,7 +80,7 @@ export default function HabitsPage() {
         {habits && (
           <>
             <div className="mt-6">
-              <DaySelector selected={selectedDate} onSelect={setSelectedDate} activeDays={activeDays} />
+              <WeekStrip selected={selectedDate} onSelect={setSelectedDate} activeDays={activeDays} />
             </div>
 
             <p className="text-muted-foreground mt-3 text-sm font-medium">{dayLabel(selectedDate)}</p>

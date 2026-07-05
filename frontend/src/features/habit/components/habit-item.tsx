@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Archive, Check, Flame } from "lucide-react";
+import { Check, Flame } from "lucide-react";
 
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
@@ -29,15 +29,6 @@ export function HabitItem({ habit, selectedDate, disabled, onChanged }: Props) {
         ? await habitApi.unmarkDate(habit.id, selectedDate)
         : await habitApi.markDate(habit.id, selectedDate);
       onChanged(updated);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function archive() {
-    setBusy(true);
-    try {
-      onChanged(await habitApi.update(habit.id, { active: false }));
     } finally {
       setBusy(false);
     }
@@ -73,17 +64,6 @@ export function HabitItem({ habit, selectedDate, disabled, onChanged }: Props) {
           <span className="hidden sm:inline">best {habit.longestStreak}</span>
         </div>
       </Link>
-
-      <button
-        type="button"
-        onClick={archive}
-        disabled={busy}
-        aria-label="Archive habit"
-        title="Archive"
-        className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
-      >
-        <Archive className="size-4" />
-      </button>
     </div>
   );
 }

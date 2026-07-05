@@ -1,6 +1,5 @@
 package com.twelveweekyear.feature.quarter.support;
 
-import com.twelveweekyear.feature.quarter.domain.GoalPace;
 import com.twelveweekyear.feature.quarter.domain.QuarterState;
 import org.junit.jupiter.api.Test;
 
@@ -41,13 +40,5 @@ class QuarterMathTest {
         QuarterMath.Progress after = QuarterMath.progress(2026, 2, LocalDate.of(2026, 7, 1));
         assertThat(after.state()).isEqualTo(QuarterState.COMPLETED);
         assertThat(after.currentDay()).isNull();
-    }
-
-    @Test
-    void pacingComparesProgressToTimeElapsed() {
-        assertThat(QuarterMath.expectedPercent(45, 90)).isEqualTo(50);
-        assertThat(QuarterMath.pace(70, 50)).isEqualTo(GoalPace.AHEAD);
-        assertThat(QuarterMath.pace(52, 50)).isEqualTo(GoalPace.ON_TRACK);
-        assertThat(QuarterMath.pace(30, 50)).isEqualTo(GoalPace.BEHIND);
     }
 }

@@ -20,14 +20,10 @@ public record QuarterReportResponse(
         int totalWeeks
 ) {
 
-    /** A goal's final standing. {@code met} is true when target was reached. */
+    /** A weekly goal's final standing. */
     public record GoalOutcome(
-            String category,
             String title,
-            int currentValue,
-            int targetValue,
-            String unit,
-            int progressPercent,
+            int week,
             boolean met
     ) {
     }

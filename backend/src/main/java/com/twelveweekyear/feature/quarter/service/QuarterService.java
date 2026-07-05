@@ -150,7 +150,7 @@ public class QuarterService {
                 continue;
             }
 
-            List<Goal> goals = goalRepository.findByQuarterIdOrderByCategoryAscCreatedAtAsc(quarter.getId());
+            List<Goal> goals = goalRepository.findByQuarterIdOrderByWeekAsc(quarter.getId());
             Integer goalsProgress = averageGoalProgress(goals);
             boolean started = !today.isBefore(b.start());
             LocalDate windowEnd = today.isAfter(b.end()) ? b.end() : today;
@@ -176,12 +176,9 @@ public class QuarterService {
         LocalDate windowEnd = today.isAfter(b.end()) ? b.end() : today;
         boolean started = !today.isBefore(b.start());
 
-        List<Goal> goals = goalRepository.findByQuarterIdOrderByCategoryAscCreatedAtAsc(quarter.getId());
+        List<Goal> goals = goalRepository.findByQuarterIdOrderByWeekAsc(quarter.getId());
         List<QuarterReportResponse.GoalOutcome> outcomes = goals.stream()
-                .map(g -> new QuarterReportResponse.GoalOutcome(
-                        g.getCategory(), g.getTitle(), g.getCurrentValue(), g.getTargetValue(), g.getUnit(),
-                        QuarterMath.progressPercent(g.getCurrentValue(), g.getTargetValue()),
-                        g.getCurrentValue() >= g.getTargetValue()))
+                .map(g -> new QuarterReportResponse.GoalOutcome(g.getTitle(), g.getWeek(), g.isDone()))
                 .toList();
         Integer goalsProgress = averageGoalProgress(goals);
 
@@ -217,12 +214,10 @@ public class QuarterService {
     private QuarterResponse buildDetail(Quarter quarter, LocalDate today) {
         QuarterMath.Progress p = QuarterMath.progress(quarter.getYear(), quarter.getQuarterNumber(), today);
         QuarterMath.Bounds b = QuarterMath.bounds(quarter.getYear(), quarter.getQuarterNumber());
-        boolean active = p.state() == QuarterState.ACTIVE;
 
-        List<Goal> goals = goalRepository.findByQuarterIdOrderByCategoryAscCreatedAtAsc(quarter.getId());
+        List<Goal> goals = goalRepository.findByQuarterIdOrderByWeekAsc(quarter.getId());
         List<GoalResponse> goalResponses = goals.stream()
-                .map(g -> quarterMapper.toGoalResponse(
-                        g, active, active ? p.currentDay() : 0, p.totalDays()))
+                .map(g -> quarterMapper.toGoalResponse(g, p.state(), p.currentWeek()))
                 .toList();
         Integer goalsProgress = averageGoalProgress(goals);
 
@@ -297,8 +292,9 @@ public class QuarterService {
         if (goals.isEmpty()) {
             return null;
         }
+        // Each weekly goal is done (100) or not (0); progress is the % completed.
         return SprintScore.average(goals.stream()
-                .map(g -> QuarterMath.progressPercent(g.getCurrentValue(), g.getTargetValue()))
+                .map(g -> g.isDone() ? 100 : 0)
                 .toList());
     }
 
