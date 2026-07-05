@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { quarterApi } from "@/features/quarter/api";
 import type { QuarterTile, YearDashboard } from "@/features/quarter/types";
 import { AppHeader } from "@/components/app-header";
+import { QuoteCard } from "@/components/quote-card";
 import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,7 @@ export default function DashboardPage() {
     <div className="flex min-h-dvh flex-col">
       <AppHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
+        <QuoteCard />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">{year}</h1>
           <div className="flex items-center gap-1">

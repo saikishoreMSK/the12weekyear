@@ -231,3 +231,4 @@ auth). The same contract powers a future mobile app.
 | Streak analytics | `/analytics` | `GET /api/v1/analytics` |
 
 Full architecture and design decisions: see [ARCHITECTURE.md](ARCHITECTURE.md).
+git commit -m "Weekly goals show date ranges; cap weeks at 13; /week week selector + habit grid" 
