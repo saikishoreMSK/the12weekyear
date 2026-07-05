@@ -1,20 +1,41 @@
 # The 12 Week Year
 
-A mobile-first SaaS web app for executing long-term goals in focused 12-week cycles — daily habit
-tracking, weekly reviews, a sprint dashboard, quarterly goals, and streak analytics.
+A mobile-first SaaS web app for executing long-term goals in focused **calendar quarters** — one
+weekly goal per week, daily habit tracking, weekly reviews, a quarter dashboard, goal pacing, and
+streak analytics. You "zoom" from the whole year down to a single day: **Dashboard → Quarter → Week
+→ Habits → Analytics**.
 
-> Backend APIs are designed to be consumed unchanged by a future React Native Android app.
+> Backend APIs are stateless, JWT-authenticated, and designed to be consumed unchanged by a future
+> React Native Android app.
 
 ## Stack
 
 | Layer    | Technology |
 |----------|------------|
-| Frontend | Next.js 16 (App Router), TypeScript, Tailwind v4, shadcn/ui, Framer Motion |
-| Backend  | Spring Boot 3.5, Java 17, Spring Data JPA, Bean Validation (Spring Security + JWT in the Auth phase) |
-| Database | PostgreSQL (Supabase) |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui, Framer Motion, TanStack Query |
+| Backend  | Spring Boot 3.5, Java 17, Spring Data JPA, Bean Validation, Spring Security (stateless JWT), Flyway |
+| Email    | Pluggable `EmailSender` — console (dev) or Resend (prod) for OTP verification & password reset |
+| Database | PostgreSQL (Supabase), Flyway-versioned schema |
 
 - **How the app works (sign-up → daily use → analytics, with examples):** [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - **Architecture & design decisions:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## Features
+
+- **Auth** — email/password with email **OTP verification** on sign-up and **OTP password reset**;
+  stateless HS256 access tokens + rotating refresh tokens (reuse detection).
+- **Year dashboard** — a 2×2 grid of the four calendar quarters, each with its state
+  (upcoming / active / completed) and live score; prev/next-year navigation.
+- **Calendar quarters** — Q1–Q4 keyed to the real calendar; dates, day-of-quarter, week (1–13) and
+  state are all derived, never stored.
+- **Weekly goals** — one goal per week (title + week), with pacing (ahead / on track / behind).
+- **Habits** — user-scoped daily actions with a 7-day picker, optimistic toggles, streaks &
+  consistency %, back-fill, and archive/resume.
+- **Weekly reviews** — four reflection prompts per week (1–13), permanent.
+- **Analytics** — activity streaks, best/worst weekday, and a month-grouped contribution heatmap.
+- **Quote of the day** — a daily rotating motivational quote, dismissible.
+- **Polish** — dark/light theme, Framer Motion animations, loading skeletons, installable PWA
+  (manifest + icon).
 
 ## Layout
 
@@ -52,4 +73,9 @@ npm run dev                   # serves http://localhost:3000
 ```
 
 ## Status
-**Phase 0 (Foundation) complete.** Built in phases — see `docs/ARCHITECTURE.md` for what's next.
+**Web app complete.** All core features (auth, calendar quarters, weekly goals, habits, weekly
+reviews, dashboard, analytics), the quarter pivot, quote of the day, email OTP, and the efficiency
+pass (optimistic UI + debounced writes + TanStack Query read-cache) are implemented; the backend
+suite is green. Remaining optional work: an offline service worker, recurring-pattern analytics over
+weekly reviews, and scheduled cleanup of expired OTP rows. Next up (planned, not started): a **React
+Native Android** app reusing the same REST API. See `docs/ARCHITECTURE.md` for the full build log.

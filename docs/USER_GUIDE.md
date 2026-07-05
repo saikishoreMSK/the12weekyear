@@ -2,202 +2,248 @@
 
 A walkthrough of the whole app, from sign-up to daily use, with a running example.
 
-> **The idea:** stop planning in 12-month chunks where the deadline feels far away. Instead you run
-> a **12-week cycle (84 days)** treated like a "year." Each cycle has one big **objective**, broken
-> into measurable **goals**, executed through daily **habits**, kept honest by a **sprint score**,
-> and reflected on every week. After a few cycles, **analytics** show your patterns.
+> **The idea:** stop planning in vague 12-month chunks where the deadline feels far away. Instead
+> you treat each **calendar quarter** (Q1 Jan–Mar, Q2 Apr–Jun, Q3 Jul–Sep, Q4 Oct–Dec) like its own
+> "year." A quarter runs ~13 weeks; you set **one goal per week**, drive them with daily **habits**,
+> keep score with a **quarter score**, and reflect every week. Over time, **analytics** show your
+> patterns.
 
 Throughout, we'll follow one example user:
 
-> **Example — "Crack a product-based company in 12 weeks."**
+> **Example — "Crack a product-based company this quarter."**
 
 ---
 
 ## The mental model (how the pieces fit)
 
+You navigate the app as one **zoom axis**, from the whole year down to a single day:
+
 ```
-Cycle  ──────────────  "Q3 — Crack a product company"   (84 days, one objective)
+Dashboard  ─────  the YEAR: four quarters in a 2×2 grid (Q1…Q4), each with its score
+   │
+Quarter    ─────  one quarter (Q3 · Jul–Sep) — its weekly goals, habits & report
+   │
+Week       ─────  one week (Week 4 of 13) — this week's single goal + habit grid
+   │
+Habits     ─────  one day — tick today's habits, build streaks
+   │
+Analytics  ─────  patterns across all your habit history (streaks, heatmap)
+```
+
+Inside a quarter:
+
+```
+Q3 · Jul–Sep 2026            (13 weeks, state: active, score 78%)
   │
-  ├── Goals ─────────  measurable targets for the cycle
-  │     • DSA            10 / 28 problems
-  │     • System Design   4 / 10 topics
-  │     • Project        30 / 100 %
-  │     • Applications    8 / 20 sent
+  ├── Weekly goals ──  ONE goal per week
+  │     • Week 1  Finish arrays & hashing         ✓ done
+  │     • Week 2  Two-pointer + sliding window     ✓ done
+  │     • Week 3  Trees & recursion                ← this week
+  │     • Week 4  Graphs (BFS/DFS)                 upcoming
+  │       …up to Week 13
   │
-  ├── Habits ────────   daily actions that drive the goals (build streaks)
+  ├── Habits ────────  daily actions that drive the goals (streaks carry across quarters)
   │     • 2 DSA questions      🔥 9-day streak
   │     • 1h System Design     🔥 4-day streak
   │     • Gym                  🔥 12-day streak
   │
-  ├── Weekly Review ──  every week: what went well / wasted time / win / blocker
-  │
-  └── Dashboard ─────   Day 23/84 · Sprint Score 78%  (goals × habits, live)
-
-Analytics ───────────   streaks, best/worst weekday, contribution heatmap (across cycles)
+  └── Weekly review ──  every week: what went well / wasted time / win / blocker
 ```
 
-**Goals vs Habits** — the distinction that matters:
-- A **goal** is an outcome you track to a target ("solve 28 DSA problems"). You nudge its progress.
-- A **habit** is the daily *action* that gets you there ("do 2 DSA questions today"). You tick it off
-  each day and build a streak. Habits are **not** reset between cycles, so streaks keep growing.
+**Weekly goals vs Habits** — the distinction that matters:
+- A **weekly goal** is the one outcome for *that week* ("finish trees & recursion"). You tick it done.
+- A **habit** is a daily *action* you repeat ("do 2 DSA questions today"). You tick it each day and
+  build a streak. Habits are **not** reset between quarters, so streaks keep growing.
 
 ---
 
-## 1. Sign up & sign in
+## 1. Sign up & verify
 
 1. Open the app → landing page → **Get started**.
 2. On **/register**, enter **Name**, **Email**, **Password** (min 8 chars). Your **timezone is detected
-   automatically** from your browser — this matters because "today," streaks, and "Day X/84" are all
-   calculated in *your* local day, not the server's.
-3. You're signed in immediately and land on the **Dashboard**.
+   automatically** from your browser — this matters because "today," streaks, and "Day X of the
+   quarter" are all calculated in *your* local day, not the server's.
+3. We email you a **6-digit OTP**. Enter it on **/verify-email** to confirm your account.
+   - The code expires in **5 minutes**; you can **resend** after a 120-second cooldown; you get **5
+     attempts**.
+   - Registration stays blocked until you verify — no account is usable without a confirmed email.
+4. Once verified you're signed in and land on the **Dashboard**.
 
-Returning later? **/login** with email + password. You stay signed in across reloads (a refresh
-token is kept in the browser; your session silently renews in the background).
+**Returning later?** **/login** with just email + password (already-verified accounts skip OTP). You
+stay signed in across reloads — a refresh token is kept in the browser and your session silently
+renews in the background.
+
+**Forgot your password?** **/forgot-password** emails an OTP; **/reset-password** takes the code + a
+new password and signs you out everywhere for safety.
 
 > Behind the scenes: you get a short-lived access token (15 min) that's auto-refreshed, so you're
-> never unexpectedly logged out mid-session. **Sign out** clears it everywhere.
+> never unexpectedly logged out mid-session. **Sign out** clears it.
 
 ---
 
-## 2. Create your 12-week cycle
+## 2. The Dashboard — your year at a glance
 
-The cycle is the container for everything.
+The **Dashboard** shows the whole year as a **2×2 grid of the four quarters**:
 
-1. Go to **Cycles → New cycle**.
-2. Fill in:
-   - **Title:** `Q3 2026 — Crack a product company`
-   - **Objective:** *"Land an offer at a product-based company by clearing DSA + system design
-     rounds and applying consistently."*
-   - **Start date:** today (or a Monday you want to begin).
-3. **Create cycle** → you're taken to the cycle page showing **Day 1 / 84**, **Week 1 / 12**, and a
-   progress bar that fills as the 84 days pass.
+```
+                         2026            ‹  ›
 
-You can run multiple cycles over time (Q3, Q4…). The **active** one is what the dashboard shows.
-When a cycle ends, open it and hit **Mark complete**.
+  ┌───────────────────────────┐  ┌───────────────────────────┐
+  │ Q1 · Jan–Mar   completed  │  │ Q2 · Apr–Jun   completed  │
+  │ 82%   ▓▓▓▓▓▓▓▓░            │  │ 74%   ▓▓▓▓▓▓▓░░            │
+  └───────────────────────────┘  └───────────────────────────┘
+  ┌───────────────────────────┐  ┌───────────────────────────┐
+  │ Q3 · Jul–Sep   active     │  │ Q4 · Oct–Dec              │
+  │ 78%   ▓▓▓▓▓▓▓▓░            │  │        Not planned yet    │
+  │ Day 23/92                 │  │        [ Plan Q4 ]        │
+  └───────────────────────────┘  └───────────────────────────┘
+```
+
+- Each tile shows the quarter's **state** — *upcoming*, *active*, or *completed* — and, once planned,
+  its **score** and progress. The active quarter also shows **Day X / total days**.
+- A quarter you haven't set up shows a **Plan Qn** button.
+- Use **‹ ›** to move between years. Everything is keyed to the real calendar, so Q3 is always
+  Jul–Sep — you don't pick start dates.
+- A **Quote of the day** sits at the top — a rotating bit of motivation you can dismiss.
+
+Tap any planned quarter tile to open it.
 
 ---
 
-## 3. Break the objective into goals
+## 3. Plan a quarter & set weekly goals
 
-On the cycle page, **Add goal** for each measurable target. For our example:
+From a **Plan Qn** button (or **/quarters/new**) you create the quarter with a short **title**, e.g.
+`Q3 — Crack a product company`. Because dates come from the calendar, there's nothing else to
+configure — the quarter immediately knows its weeks (1–13) and which week is "current."
 
-| Category | Title | Target | Unit | Weeks |
-|----------|-------|--------|------|-------|
-| DSA | Solve 28 DSA problems | 28 | problems | 1–12 |
-| System Design | Cover 10 SD topics | 10 | topics | 1–12 |
-| Project | Ship portfolio project | 100 | % | 1–8 |
-| Applications | Send 20 applications | 20 | applications | 9–12 |
+Then you set **one goal per week**. Open the quarter (or the **Week** view) and add a goal:
 
-Notes from the example:
-- **Category is free text** — use "DSA"/"System Design" for a job hunt, or "Fitness"/"Reading" for
-  anything else. The app isn't locked to one use case.
-- **Week range** lets a goal apply to only part of the cycle. Here, *Project* is front-loaded
-  (weeks 1–8) and *Applications* is back-loaded (weeks 9–12) — finish building before you apply.
-- A **percentage goal** (Project) is just target `100`, unit `%`.
+| Week | Goal (title) |
+|------|--------------|
+| 1 | Finish arrays & hashing |
+| 2 | Two-pointer + sliding window |
+| 3 | Trees & recursion |
+| 4 | Graphs (BFS/DFS) |
+| … | … |
+| 13 | Mock interviews + apply |
 
-### Tracking progress
-Each goal shows `current / target` and a bar. As you make progress, set the new value:
-- Solved 10 DSA problems so far → set **DSA** current to `10` → bar shows **36%** (10/28).
-- Made the project halfway → set **Project** to `50` → **50%**.
+- A goal is just a **title + its week** — no numeric targets to babysit. When you finish that week's
+  goal, you tick it **done**.
+- Each goal shows a **status** derived from the calendar: **done**, **this week**, **upcoming**, or
+  **missed** (a past week you never ticked).
+- **Pacing** tells you whether you're **ahead / on track / behind** based on how many weeks have
+  elapsed vs. how many goals you've completed.
 
-You update these whenever you want (e.g., at your weekly review).
+> Why one goal per week? It forces focus. Instead of a sprawling target list, you commit to a single
+> concrete outcome for each of the 13 weeks.
 
 ---
 
 ## 4. Create daily habits
 
-Goals tell you *what*; habits are the *daily reps*. Go to **Habits → Add habit**:
+Weekly goals tell you *what to finish this week*; habits are the *daily reps* that get you there. Go
+to **Habits → Add habit**:
 
 - `2 DSA questions`
 - `1 hour System Design`
 - `30 min on project`
 - `Gym`
 
-A habit is **done-or-not per day** (the "2" lives in the name — you just tick it once you've done it).
+A habit is **done-or-not per day** (any count lives in the name — you just tick it once done).
 
 ### The daily loop
-On the **Habits** page (or right on the **Dashboard**), tap a habit's circle to mark it **done today**.
-Each habit shows:
+The **Habits** page opens on **today**. A **7-day strip** lets you page across the week and pick a
+day; tapping a habit toggles it for the **selected** day (you can't tick future days). Each habit shows:
 - 🔥 **Current streak** — consecutive days completed. It stays "alive" through today until midnight,
-  so missing the morning doesn't break it — you have until end of day.
+  so missing the morning doesn't break it.
 - **Completion %** — how consistent you've been since the habit started.
 - **Longest streak** — your record.
 
-**Missed a day?** Open the habit (**/habits/[id]**) and use the **last-14-days grid** to back-fill a
-day you actually did but forgot to tick. (You can't tick future days.)
+**Missed a day?** Just page back on the 7-day strip and tick it. (Toggles are instant — the UI
+updates immediately and saves in the background, batching rapid taps so it's light on the network
+even on a flaky connection.)
+
+**Done with a habit?** Open it (**/habits/[id]**) and **archive** it — it moves to a collapsed
+*Archived* section, keeping all its history, and you can **resume** it later.
 
 > Example: you do your 2 DSA questions every day for 9 days → 🔥 **9-day streak**, **100%**. Skip
-> one → streak resets next day, but your **longest streak** still remembers the 9.
+> one → the streak resets next day, but your **longest streak** still remembers the 9.
 
 ---
 
-## 5. The Dashboard & Sprint Score
+## 5. The Week view — this week, in focus
 
-The **Dashboard** is your daily home screen for the active cycle:
+The **Week** view zooms into a single week of the quarter:
 
 ```
-Q3 2026 — Crack a product company
-Day 23 / 84 · Week 4 / 12        ▓▓▓▓░░░░░░░░  27%
+Week 3  · Jul 15 – Jul 21 · Q3 2026        (this week)
+[1][2][3][4][5][6][7][8][9][10][11][12][13]   ← pick any week; current is ringed
 
-        Sprint Score                 Goals  41%
-            78%                       Habits 86%
-        ▓▓▓▓▓▓▓▓░░
+Week 3 goal
+  ○ Trees & recursion                      [ mark done ]
 
-Goals
-  DSA: Solve 28 DSA problems          10 / 28 problems   ▓▓▓░░░░░
-  System Design: Cover 10 topics       4 / 10 topics     ▓▓▓░░░░
-  ...
+Habit completion (Mon–Sun)
+              M  T  W  T  F  S  S
+  2 DSA       ✓  ✓  ✓  ○  ·  ·  ·
+  System Des  ✓  ○  ✓  ○  ·  ·  ·
+  Gym         ✓  ✓  ○  ✓  ·  ·  ·
 
-Today's habits
-  ✓ 2 DSA questions        🔥 9   95%
-  ○ 1 hour System Design   🔥 4   70%
-  ✓ Gym                    🔥 12  90%
+  → Write this week's review
 ```
 
-Tapping a habit here marks it done and the **Sprint Score updates instantly**.
+- The **week selector** (1–13) lets you jump to any week; the current week is highlighted.
+- It shows that week's **single goal** — add one if the week is empty, or tick it done.
+- A **habit grid** shows completion for each of the week's seven dates, so you can fill the week at a
+  glance.
+- A link takes you straight to **this week's review**.
 
-### How the Sprint Score is calculated
-It blends two things, each 0–100%, then averages them:
+---
 
-1. **Goals progress** — the average completion % across your goals.
-   *Example:* DSA 36% + SD 40% + Project 50% + Apps 40% → average **41%**.
-2. **Habits consistency** — for each habit, the % of days you completed it **since this sprint
-   started**, averaged together.
-   *Example:* 95% + 70% + 90% → **85%** (shown ~86%).
+## 6. The quarter score
 
-> **Sprint Score = (41% + 85%) / 2 ≈ 78%.**
+Each planned quarter has a **score** (0–100%) shown on its dashboard tile and quarter page. It blends
+two things and averages them:
 
-If you only track goals (no habits) or only habits (no goals), the score uses whichever you have —
+1. **Weekly goals** — the share of your weekly goals marked **done** (relative to weeks elapsed).
+2. **Habit consistency** — for each habit, the % of days completed within the quarter window,
+   averaged together.
+
+If you track only goals (no habits) or only habits (no goals), the score uses whichever you have —
 it won't drag you to zero for the part you're not using. The classic 12-Week-Year target is **~85%**.
 
+At the end of a quarter, its **report** (`/quarters/[id]/report`) summarizes how you did — goals
+completed, habit consistency, and final score.
+
 ---
 
-## 6. Weekly review (every Sunday)
+## 7. Weekly review (every week)
 
-Reflection is what turns activity into improvement. On the cycle page → **Weekly reviews**:
+Reflection is what turns activity into improvement. From the Week view or the quarter, open
+**Weekly reviews** (**/quarters/[id]/reviews**):
 
-1. Pick the week (it defaults to the current week; reviewed weeks show a green dot).
+1. Pick the week (defaults to the current week; reviewed weeks are marked; range is 1–13).
 2. Answer four prompts:
    - **What went well?** — *"Hit DSA every day; finally understood consistent hashing."*
    - **What wasted time?** — *"Rabbit-holed on a UI library I didn't need."*
    - **Biggest win?** — *"Solved a hard graph problem unaided."*
    - **Biggest blocker?** — *"System design felt unstructured — need a syllabus."*
-3. **Save week 4.**
+3. **Save.**
 
 Reviews are stored **permanently** (you can edit a week, but they're never deleted) — so across a
-cycle you build an honest log you can scan for recurring patterns.
+quarter you build an honest log you can scan for recurring patterns.
 
 ---
 
-## 7. Analytics — your patterns over time
+## 8. Analytics — your patterns over time
 
-The **Analytics** page looks across *all* your habit history (not just one cycle):
+The **Analytics** page looks across *all* your habit history (not just one quarter):
 
 - **Current streak / Longest streak** — overall daily activity (any habit done = an active day).
 - **Best day / Worst day** — the weekday you're most and least consistent.
   *Example:* Best = **Tuesday**, Worst = **Sunday** → maybe protect Sunday or lower its load.
-- **Contribution heatmap** — a GitHub-style grid of the last year; each square is a day, shaded
-  darker the more habits you completed that day. Great for *seeing* your consistency at a glance.
+- **Contribution heatmap** — a GitHub-style grid of the last year, **grouped by month** with month
+  labels; each square is a day, shaded darker the more habits you completed. Great for *seeing* your
+  consistency at a glance.
 - **By day of week** — a small bar chart of completions per weekday.
 
 ---
@@ -206,29 +252,31 @@ The **Analytics** page looks across *all* your habit history (not just one cycle
 
 | When | What you do |
 |------|-------------|
-| **Each morning** | Open the Dashboard, glance at Day X/84 and your Sprint Score. |
+| **Each morning** | Open the Dashboard; glance at the active quarter's score and day count. |
 | **During the day** | Do your habits; tap each one done. Streaks tick up. |
-| **When you hit a milestone** | Bump a goal's progress (e.g., DSA 10 → 12). |
-| **Sunday** | Write the weekly review; update goal numbers for the week. |
+| **This week** | Open **Week**; when you finish the week's goal, mark it done. |
+| **Sunday** | Write the weekly review; roll into next week's goal. |
 | **Anytime** | Check Analytics to spot trends; adjust which day carries which habit. |
-| **Day 84** | Mark the cycle complete; start the next one — your habit streaks carry over. |
+| **End of quarter** | Open the quarter **report**; then plan the next quarter — habit streaks carry over. |
 
 ---
 
 ## Feature → screen → API quick reference
 
 For developers, every screen maps to a versioned REST endpoint (all bearer-authenticated except
-auth). The same contract powers a future mobile app.
+auth). The same contract powers a future React Native Android app.
 
 | Feature | Screen | API |
 |---------|--------|-----|
-| Register / Login | `/register`, `/login` | `POST /api/v1/auth/register`, `/login`, `/refresh`, `/logout` |
+| Register / verify / login | `/register`, `/verify-email`, `/login` | `POST /api/v1/auth/register`, `/verify-email`, `/resend-otp`, `/login`, `/refresh`, `/logout` |
+| Password reset | `/forgot-password`, `/reset-password` | `POST /api/v1/auth/forgot-password`, `/reset-password` |
 | Profile (name, timezone) | header / account | `GET`/`PATCH /api/v1/users/me` |
-| Cycles & goals | `/cycles`, `/cycles/[id]` | `…/cycles`, `…/cycles/{id}/goals…` |
+| Year dashboard | `/dashboard` | `GET /api/v1/dashboard?year=` |
+| Quarters & weekly goals | `/quarter`, `/quarters/new`, `/quarters/[id]` | `POST/GET/PATCH/DELETE /api/v1/quarters`, `GET /api/v1/quarters/current`, `…/quarters/{id}/goals…` |
+| Quarter report | `/quarters/[id]/report` | `GET /api/v1/quarters/{id}/report` |
+| Week view | `/week` | (reuses `/quarters/current` + `/habits`) |
 | Habits & daily toggle | `/habits`, `/habits/[id]` | `…/habits`, `POST …/habits/{id}/today`, `PUT/DELETE …/completions/{date}` |
-| Sprint dashboard | `/dashboard` | `GET /api/v1/dashboard` |
-| Weekly review | `/cycles/[id]/reviews` | `GET`/`PUT /api/v1/cycles/{id}/reviews/{week}` |
+| Weekly review | `/quarters/[id]/reviews` | `GET`/`PUT /api/v1/quarters/{id}/reviews/{week}` |
 | Streak analytics | `/analytics` | `GET /api/v1/analytics` |
 
 Full architecture and design decisions: see [ARCHITECTURE.md](ARCHITECTURE.md).
-git commit -m "Weekly goals show date ranges; cap weeks at 13; /week week selector + habit grid" 

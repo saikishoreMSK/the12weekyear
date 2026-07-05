@@ -7,7 +7,7 @@ laid out the way it is. Update it whenever a decision changes.
 
 ```
 The12WeekYear/
-├── frontend/   Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui + Framer Motion
+├── frontend/   Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui + Framer Motion + TanStack Query
 ├── backend/    Spring Boot 3.5 / Java 17 (Maven), clean-architecture layering
 ├── docs/       Architecture decisions and the API contract
 └── README.md
@@ -73,10 +73,10 @@ artifact runs locally and against Supabase by swapping env vars.
 - **Maven wrapper** (`mvnw`) is committed, so no global Maven install is required.
 - Tests run against in-memory **H2** (PostgreSQL mode), so `./mvnw test` is green without an
   external database.
-- **Flyway** migrations are **deferred** until the schema stabilises / the real Supabase DB is
-  wired in. Introducing migrations now — while the model changes every phase and tests run on
-  H2 — adds friction for no current benefit. We use JPA `ddl-auto` (`update` in dev) meanwhile,
-  and will switch to `validate` + Flyway before production.
+- **Flyway** is now **adopted**. Versioned migrations live under `backend/.../db/migration`
+  (`V1` baseline → `V2` calendar quarters → `V3` weekly goals) and `ddl-auto=validate` guards drift.
+  Existing databases baseline at V1 and skip it. Tests still run on H2 (PostgreSQL mode) with
+  Flyway applying the same scripts, so `./mvnw test` stays green with no external DB.
 
 ## Corporate network / proxy notes
 
@@ -198,6 +198,47 @@ wrapper cache rather than the `mvnw` bootstrap.
   Contract: `GET /api/v1/dashboard?year=` (year grid) · `POST/GET/PATCH/DELETE /api/v1/quarters` ·
   `GET /api/v1/quarters/{id}/report` · nested `/quarters/{id}/goals…` and `/reviews/{week}`.
 
-**All core features + polish + email OTP + calendar quarters are implemented.** Remaining optional
-work: an offline service worker, recurring-pattern analytics over weekly reviews, and scheduled
-cleanup of expired OTP rows.
+- **Weekly goals reshape (V3): complete.** Goals were simplified from free-form
+  category/target/current/week-range to just **title + week + done** — exactly **one goal per week**
+  of the quarter. `GoalStatus` (DONE / THIS_WEEK / UPCOMING / MISSED) is derived from the week vs. the
+  quarter's current week. The `SprintScore` (quarter score) now blends **goals-done %** with **habit
+  consistency**, null-aware so tracking only one side never zeroes the score. Weeks are capped at
+  `MAX_WEEKS = 13` in `QuarterMath` (a 92/93-day quarter would otherwise `ceil` to 14). `V3` migration
+  reshapes the goal table.
+
+- **Time-zoom navigation: complete.** The nav is a single zoom axis —
+  **Dashboard (year) → Quarter → Week → Habits (day) → Analytics**. `Quarter` is a thin resolver
+  page that fetches `/quarters/current` and redirects to `/quarters/{id}` (or a "plan it" empty
+  state). `Week` is week-centric: a quarter-week selector (1–13, current week ringed) showing that
+  week's single goal (add/edit) plus a habit-completion grid for the week's seven dates, and a link
+  to that week's review. A "Month" level was considered and **deliberately dropped** as redundant.
+
+- **Quote of the Day: complete.** A bundled `quotes.ts` (61 curated quotes) picked deterministically
+  by `daysSinceEpoch % length` — same quote all day, no API call, no storage. Rendered as a
+  dismissible `QuoteCard` atop the dashboard.
+
+- **Habit UX pass: complete.** The habits page uses a fixed **7-day `WeekStrip`** day picker (pager
+  over a week, dots marking active days) instead of an infinite scroll; tapping a habit toggles the
+  **selected** date (future dates disabled). Archive/resume moved off the row onto the **habit detail
+  page** via the `active` flag; archived habits live in their own collapsed section and keep their
+  history.
+
+- **Efficiency pass — optimistic writes + read-cache: complete.** Habit toggles are now
+  **optimistic** (UI flips instantly) and persisted through a **debounced, idempotent**
+  `completion-writer` that coalesces rapid taps per `(habit, date)` into a single `PUT`/`DELETE`,
+  with a **flush-on-hide** (`visibilitychange`/`pagehide`) so pending writes survive a tab close.
+  Reads go through **TanStack Query** (`staleTime` 30s, `refetchOnWindowFocus` false, `retry` 1) via
+  a `QueryProvider`; feature `queries.ts` modules expose typed hooks (`useDashboard`,
+  `useCurrentQuarter`, `useHabits`, `useHabitActions`, `useAnalytics`) and reconcile optimistic
+  toggles against the cache. This collapses the previous refetch-per-tap chatter to near-zero extra
+  requests while keeping the UI live.
+
+**The web app is feature-complete.** Implemented: auth + email OTP, calendar quarters with a 2×2
+year dashboard and goal pacing, weekly goals, habits with optimistic/debounced writes, weekly
+reviews, analytics, quote of the day, time-zoom navigation, polish, and the TanStack Query
+read-cache — all on a Flyway-versioned schema. Remaining optional work: an offline service worker,
+recurring-pattern analytics over weekly reviews, and scheduled cleanup of expired OTP rows.
+
+**Next (planned, not started): React Native Android app.** The stateless, versioned, JWT REST API
+is the integration boundary — a native client reuses the exact same endpoints with no backend
+changes. This is the subject of a future design discussion.
