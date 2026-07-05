@@ -160,7 +160,7 @@ export default function QuarterDetailPage() {
           ) : (
             <div className="bg-card divide-y rounded-lg border px-4">
               {quarter.habits.map((habit) => (
-                <QuarterHabitRow key={habit.id} habit={habit} onToggled={load} />
+                <QuarterHabitRow key={habit.id} habit={habit} />
               ))}
             </div>
           )}

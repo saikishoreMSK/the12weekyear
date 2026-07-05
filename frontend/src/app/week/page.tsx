@@ -9,7 +9,7 @@ import { GoalItem } from "@/features/quarter/components/goal-item";
 import { AddGoalForm } from "@/features/quarter/components/add-goal-form";
 import { weekDates, weekRangeLabel } from "@/features/quarter/week-dates";
 import { habitApi } from "@/features/habit/api";
-import type { Habit } from "@/features/habit/types";
+import { useOptimisticHabits } from "@/features/habit/use-optimistic-habits";
 import { HabitWeekGrid } from "@/features/habit/components/habit-week-grid";
 import { RequireAuth } from "@/features/auth/components/require-auth";
 import { ApiException } from "@/lib/api/client";
@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function WeekView() {
   const [quarter, setQuarter] = useState<Quarter | null>(null);
-  const [habits, setHabits] = useState<Habit[] | null>(null);
+  const { habits, setHabits, toggle } = useOptimisticHabits();
   const [notPlanned, setNotPlanned] = useState(false);
   const [error, setError] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
@@ -39,21 +39,12 @@ function WeekView() {
   useEffect(() => {
     loadQuarter();
     habitApi.list().then(setHabits).catch(() => setError(true));
-  }, [loadQuarter]);
+  }, [loadQuarter, setHabits]);
 
   // Default the selected week to the quarter's current week once it loads.
   useEffect(() => {
     if (quarter && selectedWeek === null) setSelectedWeek(quarter.currentWeek ?? 1);
   }, [quarter, selectedWeek]);
-
-  function upsertHabit(updated: Habit) {
-    setHabits((hs) => hs?.map((h) => (h.id === updated.id ? updated : h)) ?? null);
-  }
-
-  async function toggle(habit: Habit, iso: string) {
-    const done = habit.completionDates.includes(iso);
-    upsertHabit(done ? await habitApi.unmarkDate(habit.id, iso) : await habitApi.markDate(habit.id, iso));
-  }
 
   const activeHabits = habits?.filter((h) => h.active) ?? [];
 

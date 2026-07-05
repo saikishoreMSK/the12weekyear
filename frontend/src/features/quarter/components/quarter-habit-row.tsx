@@ -3,27 +3,19 @@
 import { useState } from "react";
 import { Check, Flame } from "lucide-react";
 
-import { habitApi } from "@/features/habit/api";
+import { writeCompletion } from "@/features/habit/completion-writer";
 import type { QuarterHabit } from "@/features/quarter/types";
+import { toIsoDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
-interface Props {
-  habit: QuarterHabit;
-  /** Called after a successful toggle so the parent re-fetches and recomputes the score. */
-  onToggled: () => void;
-}
+/** Today's toggle for a habit on the quarter view — flips instantly, writes in the background. */
+export function QuarterHabitRow({ habit }: { habit: QuarterHabit }) {
+  const [completed, setCompleted] = useState(habit.completedToday);
 
-export function QuarterHabitRow({ habit, onToggled }: Props) {
-  const [busy, setBusy] = useState(false);
-
-  async function toggle() {
-    setBusy(true);
-    try {
-      await habitApi.toggleToday(habit.id);
-      onToggled();
-    } finally {
-      setBusy(false);
-    }
+  function toggle() {
+    const next = !completed;
+    setCompleted(next);
+    writeCompletion(habit.id, toIsoDate(new Date()), next);
   }
 
   return (
@@ -31,12 +23,11 @@ export function QuarterHabitRow({ habit, onToggled }: Props) {
       <button
         type="button"
         onClick={toggle}
-        disabled={busy}
-        aria-pressed={habit.completedToday}
-        aria-label={habit.completedToday ? "Mark not done today" : "Mark done today"}
+        aria-pressed={completed}
+        aria-label={completed ? "Mark not done today" : "Mark done today"}
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-          habit.completedToday
+          completed
             ? "border-emerald-500 bg-emerald-500 text-white"
             : "border-muted-foreground/30 text-transparent hover:border-emerald-500/60",
         )}

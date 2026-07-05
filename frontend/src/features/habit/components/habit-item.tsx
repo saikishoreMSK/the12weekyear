@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Check, Flame } from "lucide-react";
 
-import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
 import { cn } from "@/lib/utils";
 
@@ -14,32 +12,19 @@ interface Props {
   selectedDate: string;
   /** True when the selected date is in the future (toggle disabled). */
   disabled?: boolean;
-  onChanged: (habit: Habit) => void;
+  /** Optimistic toggle handled by the parent (flips instantly, writes in the background). */
+  onToggle: (habit: Habit, dateIso: string) => void;
 }
 
-export function HabitItem({ habit, selectedDate, disabled, onChanged }: Props) {
-  const [busy, setBusy] = useState(false);
+export function HabitItem({ habit, selectedDate, disabled, onToggle }: Props) {
   const completed = habit.completionDates.includes(selectedDate);
-
-  async function toggle() {
-    if (disabled) return;
-    setBusy(true);
-    try {
-      const updated = completed
-        ? await habitApi.unmarkDate(habit.id, selectedDate)
-        : await habitApi.markDate(habit.id, selectedDate);
-      onChanged(updated);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="bg-card flex items-center gap-4 rounded-lg border p-4">
       <button
         type="button"
-        onClick={toggle}
-        disabled={busy || disabled}
+        onClick={() => !disabled && onToggle(habit, selectedDate)}
+        disabled={disabled}
         aria-pressed={completed}
         aria-label={completed ? "Mark not done" : "Mark done"}
         className={cn(

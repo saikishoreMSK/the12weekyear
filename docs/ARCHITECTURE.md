@@ -201,3 +201,4 @@ wrapper cache rather than the `mvnw` bootstrap.
 **All core features + polish + email OTP + calendar quarters are implemented.** Remaining optional
 work: an offline service worker, recurring-pattern analytics over weekly reviews, and scheduled
 cleanup of expired OTP rows.
+git add . && git commit -m "Optimistic + debounced habit toggles (idempotent, flush-on-hide)" && git push

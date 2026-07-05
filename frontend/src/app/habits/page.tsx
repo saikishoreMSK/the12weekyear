@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
+import { useOptimisticHabits } from "@/features/habit/use-optimistic-habits";
 import { AddHabitForm } from "@/features/habit/components/add-habit-form";
 import { HabitItem } from "@/features/habit/components/habit-item";
 import { ArchivedHabitItem } from "@/features/habit/components/archived-habit-item";
@@ -25,7 +26,7 @@ function dayLabel(iso: string): string {
 }
 
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[] | null>(null);
+  const { habits, setHabits, toggle, syncError } = useOptimisticHabits();
   const [error, setError] = useState(false);
   const [selectedDate, setSelectedDate] = useState(TODAY);
 
@@ -38,7 +39,7 @@ export default function HabitsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [setHabits]);
 
   function upsert(updated: Habit) {
     setHabits((prev) => (prev ? prev.map((h) => (h.id === updated.id ? updated : h)) : prev));
@@ -51,7 +52,6 @@ export default function HabitsPage() {
   const active = habits?.filter((h) => h.active) ?? [];
   const archived = habits?.filter((h) => !h.active) ?? [];
 
-  // Days with at least one completed active habit — powers the dots in the selector.
   const activeDays = useMemo(() => {
     const set = new Set<string>();
     active.forEach((h) => h.completionDates.forEach((d) => set.add(d)));
@@ -68,6 +68,11 @@ export default function HabitsPage() {
         </div>
 
         {error && <p className="text-destructive mt-6 text-sm">Couldn&apos;t load your habits.</p>}
+        {syncError && (
+          <p className="text-destructive mt-4 text-xs">
+            A change didn&apos;t sync — refresh to make sure everything saved.
+          </p>
+        )}
 
         {habits === null && !error && (
           <div className="mt-6 space-y-3">
@@ -101,7 +106,7 @@ export default function HabitsPage() {
                     habit={habit}
                     selectedDate={selectedDate}
                     disabled={selectedDate > TODAY}
-                    onChanged={upsert}
+                    onToggle={toggle}
                   />
                 ))
               )}
