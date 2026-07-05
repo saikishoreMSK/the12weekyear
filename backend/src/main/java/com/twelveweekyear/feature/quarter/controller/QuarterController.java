@@ -41,6 +41,11 @@ public class QuarterController {
         return ApiResponse.success(quarterService.create(user.id(), request));
     }
 
+    @GetMapping("/current")
+    public ApiResponse<QuarterResponse> current(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.success(quarterService.getCurrent(user.id()));
+    }
+
     @GetMapping("/{quarterId}")
     public ApiResponse<QuarterResponse> get(
             @AuthenticationPrincipal AuthUser user,

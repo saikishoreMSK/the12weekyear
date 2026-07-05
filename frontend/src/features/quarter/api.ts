@@ -19,6 +19,9 @@ export const quarterApi = {
 
   get: (id: string) => apiClient.get<Quarter>(`${BASE}/${id}`),
 
+  /** The quarter containing today (throws ApiException 404 if it isn't planned). */
+  current: () => apiClient.get<Quarter>(`${BASE}/current`),
+
   report: (id: string) => apiClient.get<QuarterReport>(`${BASE}/${id}/report`),
 
   create: (input: CreateQuarterInput) => apiClient.post<Quarter>(BASE, input),

@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/quarter", label: "Quarter" },
+  { href: "/week", label: "Week" },
   { href: "/habits", label: "Habits" },
   { href: "/analytics", label: "Analytics" },
 ];

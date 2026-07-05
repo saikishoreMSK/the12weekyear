@@ -93,6 +93,17 @@ public class QuarterService {
         return buildDetail(quarter, userTimeService.today(userId));
     }
 
+    /** The quarter containing today, if the user has planned it; 404 otherwise. */
+    @Transactional(readOnly = true)
+    public QuarterResponse getCurrent(UUID userId) {
+        LocalDate today = userTimeService.today(userId);
+        int quarterNumber = (today.getMonthValue() - 1) / 3 + 1;
+        Quarter quarter = quarterRepository
+                .findByUserIdAndYearAndQuarterNumber(userId, today.getYear(), quarterNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("No quarter planned for the current period"));
+        return buildDetail(quarter, today);
+    }
+
     @Transactional
     public QuarterResponse update(UUID userId, UUID quarterId, UpdateQuarterRequest request) {
         Quarter quarter = requireOwnedQuarter(userId, quarterId);
