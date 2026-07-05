@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Flame } from "lucide-react";
+import { Archive, Check, Flame } from "lucide-react";
 
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
@@ -10,16 +10,34 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   habit: Habit;
+  /** The day (yyyy-MM-dd) the toggle marks/reflects. */
+  selectedDate: string;
+  /** True when the selected date is in the future (toggle disabled). */
+  disabled?: boolean;
   onChanged: (habit: Habit) => void;
 }
 
-export function HabitItem({ habit, onChanged }: Props) {
+export function HabitItem({ habit, selectedDate, disabled, onChanged }: Props) {
   const [busy, setBusy] = useState(false);
+  const completed = habit.completionDates.includes(selectedDate);
 
   async function toggle() {
+    if (disabled) return;
     setBusy(true);
     try {
-      onChanged(await habitApi.toggleToday(habit.id));
+      const updated = completed
+        ? await habitApi.unmarkDate(habit.id, selectedDate)
+        : await habitApi.markDate(habit.id, selectedDate);
+      onChanged(updated);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function archive() {
+    setBusy(true);
+    try {
+      onChanged(await habitApi.update(habit.id, { active: false }));
     } finally {
       setBusy(false);
     }
@@ -30,14 +48,15 @@ export function HabitItem({ habit, onChanged }: Props) {
       <button
         type="button"
         onClick={toggle}
-        disabled={busy}
-        aria-pressed={habit.completedToday}
-        aria-label={habit.completedToday ? "Mark not done today" : "Mark done today"}
+        disabled={busy || disabled}
+        aria-pressed={completed}
+        aria-label={completed ? "Mark not done" : "Mark done"}
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-          habit.completedToday
+          completed
             ? "border-emerald-500 bg-emerald-500 text-white"
             : "border-muted-foreground/30 text-transparent hover:border-emerald-500/60",
+          disabled && "cursor-not-allowed opacity-40",
         )}
       >
         <Check className="size-5" />
@@ -54,6 +73,17 @@ export function HabitItem({ habit, onChanged }: Props) {
           <span className="hidden sm:inline">best {habit.longestStreak}</span>
         </div>
       </Link>
+
+      <button
+        type="button"
+        onClick={archive}
+        disabled={busy}
+        aria-label="Archive habit"
+        title="Archive"
+        className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+      >
+        <Archive className="size-4" />
+      </button>
     </div>
   );
 }

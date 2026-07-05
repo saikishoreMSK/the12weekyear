@@ -1,19 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { habitApi } from "@/features/habit/api";
 import type { Habit } from "@/features/habit/types";
 import { AddHabitForm } from "@/features/habit/components/add-habit-form";
 import { HabitItem } from "@/features/habit/components/habit-item";
+import { ArchivedHabitItem } from "@/features/habit/components/archived-habit-item";
+import { DaySelector } from "@/features/habit/components/day-selector";
 import { AppHeader } from "@/components/app-header";
-import { Stagger, StaggerItem } from "@/components/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseIsoDate, toIsoDate } from "@/lib/date";
+
+const TODAY = toIsoDate(new Date());
+
+function dayLabel(iso: string): string {
+  if (iso === TODAY) return "Today";
+  return parseIsoDate(iso).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[] | null>(null);
   const [error, setError] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(TODAY);
 
   useEffect(() => {
     let active = true;
@@ -27,10 +41,22 @@ export default function HabitsPage() {
   }, []);
 
   function upsert(updated: Habit) {
-    setHabits((prev) =>
-      prev ? prev.map((h) => (h.id === updated.id ? updated : h)) : prev,
-    );
+    setHabits((prev) => (prev ? prev.map((h) => (h.id === updated.id ? updated : h)) : prev));
   }
+
+  function removeHabit(id: string) {
+    setHabits((prev) => (prev ? prev.filter((h) => h.id !== id) : prev));
+  }
+
+  const active = habits?.filter((h) => h.active) ?? [];
+  const archived = habits?.filter((h) => !h.active) ?? [];
+
+  // Days with at least one completed active habit — powers the dots in the selector.
+  const activeDays = useMemo(() => {
+    const set = new Set<string>();
+    active.forEach((h) => h.completionDates.forEach((d) => set.add(d)));
+    return set;
+  }, [active]);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -41,37 +67,65 @@ export default function HabitsPage() {
           <AddHabitForm onAdded={(h) => setHabits((prev) => [...(prev ?? []), h])} />
         </div>
 
-        <div className="mt-6 space-y-3">
-          {error && <p className="text-destructive text-sm">Couldn&apos;t load your habits.</p>}
+        {error && <p className="text-destructive mt-6 text-sm">Couldn&apos;t load your habits.</p>}
 
-          {habits === null && !error && (
-            <>
-              <Skeleton className="h-[72px] w-full" />
-              <Skeleton className="h-[72px] w-full" />
-              <Skeleton className="h-[72px] w-full" />
-            </>
-          )}
+        {habits === null && !error && (
+          <div className="mt-6 space-y-3">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-[72px] w-full" />
+            <Skeleton className="h-[72px] w-full" />
+          </div>
+        )}
 
-          {habits?.length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground text-sm">
-                  No habits yet. Add the daily actions that drive your goals.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {habits && (
+          <>
+            <div className="mt-6">
+              <DaySelector selected={selectedDate} onSelect={setSelectedDate} activeDays={activeDays} />
+            </div>
 
-          {habits && habits.length > 0 && (
-            <Stagger className="space-y-3">
-              {habits.map((habit) => (
-                <StaggerItem key={habit.id}>
-                  <HabitItem habit={habit} onChanged={upsert} />
-                </StaggerItem>
-              ))}
-            </Stagger>
-          )}
-        </div>
+            <p className="text-muted-foreground mt-3 text-sm font-medium">{dayLabel(selectedDate)}</p>
+
+            <div className="mt-2 space-y-3">
+              {active.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-muted-foreground text-sm">
+                      No active habits. Add the daily actions that drive your goals.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                active.map((habit) => (
+                  <HabitItem
+                    key={habit.id}
+                    habit={habit}
+                    selectedDate={selectedDate}
+                    disabled={selectedDate > TODAY}
+                    onChanged={upsert}
+                  />
+                ))
+              )}
+            </div>
+
+            {archived.length > 0 && (
+              <section className="mt-10">
+                <h2 className="text-muted-foreground mb-2 text-sm font-semibold uppercase tracking-wide">
+                  Archived
+                </h2>
+                <div className="space-y-2">
+                  {archived.map((habit) => (
+                    <ArchivedHabitItem
+                      key={habit.id}
+                      habit={habit}
+                      onChanged={upsert}
+                      onDeleted={removeHabit}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </main>
     </div>
   );
