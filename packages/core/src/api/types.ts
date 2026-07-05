@@ -2,7 +2,7 @@
  * TypeScript mirror of the backend's response envelope (see `common/api/ApiResponse.java`).
  *
  * Keeping these shapes in sync with the backend is the contract that lets the same client code
- * be reused by the future React Native app.
+ * be reused by both the web app (@twy/web) and the React Native app (@twy/mobile).
  */
 
 export interface FieldViolation {

@@ -1,10 +1,23 @@
-# Root-level ignores. frontend/ and backend/ have their own .gitignore for build artifacts.
+# Root-level ignores. apps/* and backend/ also have their own .gitignore for build artifacts.
 
 # Environment files (never commit secrets)
 .env
 .env.*
 !.env.example
 !.env.local.example
+
+# Dependencies (monorepo: hoisted to root; workspaces may also nest)
+node_modules/
+
+# Build / tooling caches
+.turbo/
+dist/
+.next/
+out/
+
+# Expo / React Native (apps/mobile)
+.expo/
+*.tsbuildinfo
 
 # Local tooling / downloaded distributions
 .tooling/

@@ -30,16 +30,20 @@ services:
         value: update
 
   # ---------------- Frontend: Next.js (Node) ----------------
+  # Builds from the monorepo root (npm workspaces). The web app lives in apps/web
+  # as the @twy/web workspace and shares @twy/core with the mobile app.
   - type: web
     name: twelveweekyear-web
     runtime: node
     branch: main
     region: singapore
     plan: free
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
+    rootDir: .
+    # npm ci installs the whole workspace from the root lockfile, then we build only @twy/web.
+    # (Once apps/mobile is added, revisit to avoid installing its Expo deps here.)
+    buildCommand: npm ci && npm run build --workspace @twy/web
     # Bind explicitly to Render's $PORT so the server is detected.
-    startCommand: npx next start -p $PORT
+    startCommand: npm run start --workspace @twy/web -- -p $PORT
     envVars:
       # Base URL of the backend API above (https://twelveweekyear-api.onrender.com).
       # Inlined at BUILD time — set it before the first build, then redeploy if it changes.

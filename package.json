@@ -1,0 +1,20 @@
+{
+  "name": "twelve-week-year",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The 12 Week Year — monorepo (web + mobile share one backend and a core package)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @twy/web",
+    "dev:web": "npm run dev --workspace @twy/web",
+    "build:web": "npm run build --workspace @twy/web",
+    "start:web": "npm run start --workspace @twy/web",
+    "lint:web": "npm run lint --workspace @twy/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
