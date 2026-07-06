@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 
-import { quoteOfTheDay, useDashboard, type QuarterTile } from "@twy/core";
+import { quarterApi, quoteOfTheDay, useDashboard, type QuarterTile } from "@twy/core";
 import { Screen } from "@/components/screen";
 import { useColors } from "@/theme";
 
 export default function DashboardScreen() {
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const { data, isError } = useDashboard(year);
+  const { data, isError, refetch } = useDashboard(year);
+  const qc = useQueryClient();
   const router = useRouter();
   const c = useColors();
   const quote = quoteOfTheDay();
+
+  async function planQuarter(quarterNumber: number) {
+    await quarterApi.create({ year, quarterNumber });
+    refetch();
+    qc.invalidateQueries({ queryKey: ["quarter", "current"] });
+  }
 
   return (
     <Screen>
@@ -57,9 +65,8 @@ export default function DashboardScreen() {
                 <QuarterCard
                   key={q.quarterNumber}
                   tile={q}
-                  onPress={() => {
-                    if (q.planned) router.push("/quarter");
-                  }}
+                  onOpen={() => router.push("/quarter")}
+                  onPlan={() => planQuarter(q.quarterNumber)}
                 />
               ))}
             </View>
@@ -68,24 +75,47 @@ export default function DashboardScreen() {
   );
 }
 
-function QuarterCard({ tile, onPress }: { tile: QuarterTile; onPress: () => void }) {
+function QuarterCard({
+  tile,
+  onOpen,
+  onPlan,
+}: {
+  tile: QuarterTile;
+  onOpen: () => void;
+  onPlan: () => Promise<void>;
+}) {
   const heading = `Q${tile.quarterNumber} · ${tile.label}`;
   const base = "h-36 w-[48%] justify-between rounded-xl border p-4";
+  const [planning, setPlanning] = useState(false);
 
   if (!tile.planned) {
     return (
-      <View
-        className={`${base} border-dashed border-neutral-300 dark:border-neutral-700`}
-      >
+      <View className={`${base} border-dashed border-neutral-300 dark:border-neutral-700`}>
         <Text className="font-semibold text-neutral-900 dark:text-neutral-50">{heading}</Text>
-        <Text className="text-xs text-neutral-400">Not planned yet</Text>
+        <Pressable
+          onPress={async () => {
+            if (planning) return;
+            setPlanning(true);
+            try {
+              await onPlan();
+            } finally {
+              setPlanning(false);
+            }
+          }}
+          disabled={planning}
+          className="items-center rounded-lg border border-neutral-300 py-2 active:opacity-70 dark:border-neutral-700"
+        >
+          <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            {planning ? "Planning…" : `Plan Q${tile.quarterNumber}`}
+          </Text>
+        </Pressable>
       </View>
     );
   }
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onOpen}
       className={`${base} border-neutral-200 active:opacity-70 dark:border-neutral-800`}
     >
       <View className="flex-row items-start justify-between gap-1">

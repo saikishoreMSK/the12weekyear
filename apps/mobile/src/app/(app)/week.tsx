@@ -1,14 +1,27 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { toIsoDate, useCurrentQuarter, useHabits, weekDates, weekRangeLabel } from "@twy/core";
+import {
+  quarterApi,
+  toIsoDate,
+  useCurrentQuarter,
+  useGoalActions,
+  useHabitActions,
+  useHabits,
+  weekDates,
+  weekRangeLabel,
+} from "@twy/core";
 import { Screen } from "@/components/screen";
 import { GoalRow } from "@/components/goal-row";
 import { useColors } from "@/theme";
 
+const TODAY = toIsoDate(new Date());
+
 export default function WeekScreen() {
-  const { data: quarter, isError: notPlanned } = useCurrentQuarter();
+  const { data: quarter, isError: notPlanned, refetch } = useCurrentQuarter();
   const { data: habits } = useHabits();
+  const actions = useHabitActions();
+  const goalActions = useGoalActions();
   const c = useColors();
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
 
@@ -94,9 +107,17 @@ export default function WeekScreen() {
           Week {selectedWeek} goal
         </Text>
         {goal ? (
-          <GoalRow goal={goal} />
+          <GoalRow
+            goal={goal}
+            onToggle={() => goalActions.toggle(quarter.id, goal, quarter.currentWeek)}
+          />
         ) : (
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">No goal set for this week.</Text>
+          <AddWeekGoal
+            onAdd={async (title) => {
+              await quarterApi.addGoal(quarter.id, { title, week: selectedWeek });
+              refetch();
+            }}
+          />
         )}
       </View>
 
@@ -125,15 +146,23 @@ export default function WeekScreen() {
                   {h.name}
                 </Text>
                 {days.map((d) => {
-                  const done = h.completionDates.includes(toIsoDate(d));
+                  const iso = toIsoDate(d);
+                  const done = h.completionDates.includes(iso);
+                  const future = iso > TODAY;
                   return (
-                    <View key={toIsoDate(d)} className="w-7 items-center">
+                    <Pressable
+                      key={iso}
+                      disabled={future}
+                      onPress={() => actions.toggle(h, iso)}
+                      hitSlop={6}
+                      className="w-7 items-center py-1"
+                    >
                       <View
                         className={`h-4 w-4 rounded-full ${
-                          done ? "bg-blue-600" : "bg-neutral-200 dark:bg-neutral-700"
+                          done ? "bg-blue-600" : future ? "bg-neutral-100 dark:bg-neutral-800" : "bg-neutral-200 dark:bg-neutral-700"
                         }`}
                       />
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
@@ -142,5 +171,45 @@ export default function WeekScreen() {
         )}
       </View>
     </Screen>
+  );
+}
+
+/** Inline "add this week's goal" form (shown when the week has no goal yet). */
+function AddWeekGoal({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
+  const c = useColors();
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    const trimmed = title.trim();
+    if (!trimmed || busy) return;
+    setBusy(true);
+    try {
+      await onAdd(trimmed);
+      setTitle("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <View className="flex-row items-center gap-2">
+      <TextInput
+        value={title}
+        onChangeText={setTitle}
+        placeholder="One focus for this week"
+        placeholderTextColor={c.muted}
+        onSubmitEditing={submit}
+        returnKeyType="done"
+        className="flex-1 rounded-lg border border-neutral-300 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
+      />
+      <Pressable
+        onPress={submit}
+        disabled={!title.trim() || busy}
+        className={`rounded-lg bg-blue-600 px-4 py-2.5 ${!title.trim() || busy ? "opacity-50" : "active:opacity-80"}`}
+      >
+        <Text className="font-semibold text-white">Add</Text>
+      </Pressable>
+    </View>
   );
 }

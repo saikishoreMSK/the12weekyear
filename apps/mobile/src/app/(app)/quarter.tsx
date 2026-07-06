@@ -1,12 +1,13 @@
 import { ActivityIndicator, Text, View } from "react-native";
 
-import { useCurrentQuarter, type QuarterHabit } from "@twy/core";
+import { useCurrentQuarter, useGoalActions, type QuarterHabit } from "@twy/core";
 import { Screen } from "@/components/screen";
 import { GoalRow } from "@/components/goal-row";
 import { useColors } from "@/theme";
 
 export default function QuarterScreen() {
   const { data: quarter, isError: notPlanned } = useCurrentQuarter();
+  const goalActions = useGoalActions();
   const c = useColors();
 
   if (notPlanned) {
@@ -100,7 +101,11 @@ export default function QuarterScreen() {
               .slice()
               .sort((a, b) => a.week - b.week)
               .map((goal) => (
-                <GoalRow key={goal.id} goal={goal} />
+                <GoalRow
+                  key={goal.id}
+                  goal={goal}
+                  onToggle={() => goalActions.toggle(quarter.id, goal, quarter.currentWeek)}
+                />
               ))}
           </View>
         )}

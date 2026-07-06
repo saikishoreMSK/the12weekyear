@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { HABITS_KEY } from "@/features/habit/queries";
-import { onCompletionError } from "@/features/habit/completion-writer";
-import { onGoalError } from "@/features/quarter/goal-writer";
+import { flushCompletions, onCompletionError } from "@/features/habit/completion-writer";
+import { flushGoals, onGoalError } from "@/features/quarter/goal-writer";
 
 /**
  * App-wide client cache for GET requests. Data is reused across navigations (no refetch within
@@ -34,6 +34,23 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       onGoalError(null);
     };
   }, [client]);
+
+  // Flush any pending debounced writes before the tab is hidden/closed (web lifecycle).
+  useEffect(() => {
+    const flush = () => {
+      flushCompletions();
+      flushGoals();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", flush);
+    };
+  }, []);
 
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }

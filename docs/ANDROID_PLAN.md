@@ -207,5 +207,16 @@ Android `expo export` (~3678 modules) green.
 
 Everything is **read-only** this phase (no toggles/edits yet).
 
-Next: **M3 — interactions + optimistic UI** (habit toggles, goal done, add habit/quarter), migrating
-`useHabitActions` + the debounced `completion-writer` into `@twy/core`.
+**M3 complete** (pending on-device confirmation). Verified: web build, core + mobile typecheck,
+Android `expo export` (~3680 modules) green.
+- **Mutation logic migrated into `@twy/core`**: `useHabitActions` + `completion-writer` and
+  `useGoalActions` + `goal-writer` (+ `useQuarter`). The writers no longer self-register DOM
+  listeners; core exposes `flushCompletions()` / `flushGoals()` and each app wires its own lifecycle
+  trigger (web: `visibilitychange`/`pagehide`; mobile: `AppState → background`). Web re-exports all of
+  it — behavior unchanged.
+- **Mobile interactions (optimistic)**: tap a habit circle (Habits + Week grid) to toggle completion;
+  add a habit; mark weekly goals done (Quarter + Week); add a week's goal; "Plan Qn" creates a quarter
+  from the Dashboard. Future-dated habit cells are disabled.
+
+Next: **M4 — offline-first** (SQLite store, query persistence, outbox + sync, port calculators to
+core, backend `updatedAt`).
