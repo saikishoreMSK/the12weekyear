@@ -173,6 +173,23 @@ and open in Expo Go — expect "API reachable ✓".
   `package.json`** so it resolves at root for the CLI; Metro still bundles it fine. Also set
   `experiments.typedRoutes: false` in `app.json` (its type generator hit the same resolution path).
 
-Next: **M1 — Auth** (register → OTP verify → login → forgot/reset), swapping the stub for
-expo-secure-store. Feature DTO types / api / queries / zod and the backend calculators migrate into
-`@twy/core` incrementally as mobile consumes them.
+**M1 complete** (pending on-device confirmation). Verified: web build green, core + mobile typecheck
+green, Android `expo export` green (1400 modules).
+
+- **`expo-secure-store`** now backs mobile token storage (Android Keystore); the M0 in-memory stub
+  is gone. Access token in memory, refresh token encrypted at rest, async reads on cold start.
+- **Auth migrated into `@twy/core`**: `auth/{types,api,schemas}` (+ `zod` dep). Web re-exports them
+  from its `features/auth/{types,api,schemas}` shims — no web import sites changed, no drift. This is
+  the first feature migration.
+- **Mobile auth**: `AuthProvider` (session bootstrap from secure storage + single-flight refresh via
+  the shared client), `(auth)` route group with **login / register / verify-email / forgot-password /
+  reset-password** (react-hook-form + zod, 120s resend cooldown), and route guards — `(app)` requires
+  a session, `(auth)` bounces signed-in users. StyleSheet UI primitives in `components/ui.tsx` +
+  `theme.ts` (NativeWind still deferred to M2). Deleted the Expo template's theme/demo cruft.
+- The M0 health screen is replaced by an authenticated placeholder (`(app)/index.tsx`).
+
+On-device check: register a test account → OTP email → verify → land signed in; login/logout;
+forgot/reset. Styling is StyleSheet (light/dark aware); NativeWind + real Dashboard land in **M2**.
+
+Next: **M2 — read screens + bottom tab bar** (Dashboard / Quarter / Week / Habits / Profile),
+online-first, migrating quarter/habit/analytics types+api+queries into `@twy/core`.

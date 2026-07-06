@@ -1,27 +1,34 @@
+import * as SecureStore from "expo-secure-store";
+
 import type { TokenStorage } from "@twy/core";
 
 /**
- * M0 placeholder token storage — in-memory only, so the connectivity check can run.
+ * Secure token storage for the mobile app (implements the @twy/core TokenStorage seam):
+ *  - access token  → in-memory only (re-obtained via refresh on cold start).
+ *  - refresh token → expo-secure-store (Android Keystore / iOS Keychain), read back asynchronously.
  *
- * Replaced in M1 with an expo-secure-store implementation (Android Keystore): the access token
- * stays in memory while the refresh token is persisted securely and read back asynchronously.
- * The `TokenStorage` seam already allows async reads/writes, so that swap is drop-in.
+ * The async reads/writes are why the seam allows Promise-returning methods.
  */
+const REFRESH_TOKEN_KEY = "twy.refreshToken";
+
 let accessToken: string | null = null;
-let refreshToken: string | null = null;
 
 export const tokenStorage: TokenStorage = {
   getAccessToken: () => accessToken,
-  getRefreshToken: () => refreshToken,
-  set: (access, refresh) => {
+
+  getRefreshToken: () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
+
+  set: async (access, refresh) => {
     accessToken = access;
-    refreshToken = refresh;
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
   },
+
   setAccessToken: (access) => {
     accessToken = access;
   },
-  clear: () => {
+
+  clear: async () => {
     accessToken = null;
-    refreshToken = null;
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   },
 };

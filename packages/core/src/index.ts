@@ -8,3 +8,6 @@
 export * from "./api/types";
 export * from "./api/storage";
 export * from "./api/client";
+export * from "./auth/types";
+export * from "./auth/api";
+export * from "./auth/schemas";
