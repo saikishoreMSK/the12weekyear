@@ -6,6 +6,8 @@ import { BarChart3, Bell, ChevronRight, RefreshCw, Sparkles } from "lucide-react
 
 import { useAuth } from "@/features/auth/auth-context";
 import { Screen } from "@/components/screen";
+import { useIsOnline } from "@/lib/query";
+import { usePendingCount } from "@/lib/outbox";
 import { useColors } from "@/theme";
 
 type IconType = ComponentType<{ color?: string; size?: number }>;
@@ -14,6 +16,9 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const version = Constants.expoConfig?.version ?? "1.0.0";
+  const online = useIsOnline();
+  const pending = usePendingCount();
+  const syncValue = !online ? "Offline" : pending > 0 ? `${pending} pending` : "Synced";
 
   return (
     <Screen>
@@ -31,7 +36,7 @@ export default function ProfileScreen() {
       {/* Settings list */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Row icon={BarChart3} label="Analytics" first onPress={() => router.push("/analytics")} />
-        <Row icon={RefreshCw} label="Sync" value="Synced" />
+        <Row icon={RefreshCw} label="Sync" value={syncValue} />
         <Row icon={Bell} label="Notifications" value="Coming soon" disabled />
         <Row icon={Sparkles} label="Go Premium" value="Coming soon" disabled />
       </View>

@@ -1,4 +1,5 @@
 import { habitApi } from "./api";
+import { isNetworkError, queueWrite } from "../sync";
 
 /**
  * Fire-and-forget writer for habit completions (shared by web + mobile).
@@ -31,7 +32,13 @@ function send(p: Pending): void {
   const request = p.done
     ? habitApi.markDate(p.habitId, p.date)
     : habitApi.unmarkDate(p.habitId, p.date);
-  request.catch(() => errorHandler?.());
+  request.catch((e) => {
+    // Offline → hand to the outbox (mobile) for replay; otherwise re-sync from the server.
+    const queued =
+      isNetworkError(e) &&
+      queueWrite({ kind: "completion", habitId: p.habitId, date: p.date, done: p.done });
+    if (!queued) errorHandler?.();
+  });
 }
 
 /** Queue the desired final state for a (habit, date). */

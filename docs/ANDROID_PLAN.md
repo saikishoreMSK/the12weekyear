@@ -218,5 +218,22 @@ Android `expo export` (~3680 modules) green.
   add a habit; mark weekly goals done (Quarter + Week); add a week's goal; "Plan Qn" creates a quarter
   from the Dashboard. Future-dated habit cells are disabled.
 
-Next: **M4 — offline-first** (SQLite store, query persistence, outbox + sync, port calculators to
-core, backend `updatedAt`).
+**M4 complete** (pragmatic offline; pending on-device confirmation). Verified: web build, core +
+mobile typecheck, Android `expo export` (~3706 modules) green.
+- **Query-cache persistence** (AsyncStorage via `PersistQueryClientProvider`, gcTime/maxAge 7d): the
+  app opens with last-synced quarters/habits/analytics offline, and optimistic edits survive restarts.
+- **Connectivity** wired to TanStack Query's `onlineManager` via `@react-native-community/netinfo`.
+- **Offline write outbox**: a new `@twy/core` sync seam (`WriteOp`, `queueWrite`, `sendOp`,
+  `isNetworkError`) — the debounced writers, on a transport failure, hand the final op to the
+  registered outbox instead of erroring. Mobile's AsyncStorage-backed outbox coalesces by target,
+  persists, and **replays on reconnect** (then invalidates to resync). Web registers no outbox, so it
+  keeps its "invalidate on error" behavior unchanged.
+- **Sync status** in Profile: Offline / N pending / Synced (live via `useIsOnline` + `usePendingCount`).
+- **No backend changes** needed — completions are idempotent, goals last-write-wins; single-user
+  conflicts are a non-issue, so `updatedAt`/delta-sync stayed deferred.
+
+Scope note: on-device recomputation of streaks/scores/heatmap (Approach B) was deliberately deferred
+— offline shows last-synced derived values, which refresh on reconnect.
+
+Next: **M5 — on-device notifications** (habit reminders, weekly review, quarter-end), then M6 widgets,
+M7 polish, M8 release. (On-device derivation remains an optional follow-up.)

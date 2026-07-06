@@ -1,4 +1,5 @@
 import { quarterApi } from "./api";
+import { isNetworkError, queueWrite } from "../sync";
 
 /**
  * Fire-and-forget writer for weekly-goal "done" toggles (shared by web + mobile; same idea as the
@@ -26,7 +27,13 @@ export function onGoalError(handler: (() => void) | null): void {
 }
 
 function send(p: Pending): void {
-  quarterApi.updateGoal(p.quarterId, p.goalId, { done: p.done }).catch(() => errorHandler?.());
+  quarterApi.updateGoal(p.quarterId, p.goalId, { done: p.done }).catch((e) => {
+    // Offline → hand to the outbox (mobile) for replay; otherwise re-sync from the server.
+    const queued =
+      isNetworkError(e) &&
+      queueWrite({ kind: "goal", quarterId: p.quarterId, goalId: p.goalId, done: p.done });
+    if (!queued) errorHandler?.();
+  });
 }
 
 /** Queue the desired final done-state for a goal. */
