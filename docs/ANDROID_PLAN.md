@@ -235,5 +235,18 @@ mobile typecheck, Android `expo export` (~3706 modules) green.
 Scope note: on-device recomputation of streaks/scores/heatmap (Approach B) was deliberately deferred
 — offline shows last-synced derived values, which refresh on reconnect.
 
-Next: **M5 — on-device notifications** (habit reminders, weekly review, quarter-end), then M6 widgets,
-M7 polish, M8 release. (On-device derivation remains an optional follow-up.)
+**M5 complete** (code-complete; needs a dev build to test delivery — not testable in the browser).
+Verified: mobile typecheck + Android `expo export` (~3770 modules) green.
+- **`expo-notifications`** local scheduling (no backend): daily habit reminders (Morning 8:00 / Midday
+  13:00 / Evening 20:00 preset slots), Sunday 18:00 weekly-review nudge, and an end-of-quarter nudge
+  (~2 days before the current quarter's end date). Android channel + permission flow.
+- **Notification preferences** persisted in AsyncStorage; **settings screen** (Profile → Notifications)
+  with a master switch + per-type toggles; changes reschedule immediately.
+- **Deep-links**: tapping a reminder opens Habits / Week / Dashboard.
+- `expo-notifications` config plugin added to `app.json`.
+
+Note: preset time slots (not a free time-picker) to avoid an extra native dep; server push (FCM)
+remains out of scope.
+
+Next: **M6 — interactive Android home-screen widgets** (also needs a dev build), then M7 polish,
+M8 release. A good point to do the **first EAS dev build** to validate M5 + M6 on-device.

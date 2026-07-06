@@ -37,7 +37,7 @@ export default function ProfileScreen() {
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Row icon={BarChart3} label="Analytics" first onPress={() => router.push("/analytics")} />
         <Row icon={RefreshCw} label="Sync" value={syncValue} />
-        <Row icon={Bell} label="Notifications" value="Coming soon" disabled />
+        <Row icon={Bell} label="Notifications" onPress={() => router.push("/notifications")} />
         <Row icon={Sparkles} label="Go Premium" value="Coming soon" disabled />
       </View>
 

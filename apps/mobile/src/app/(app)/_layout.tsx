@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Pressable } from "react-native";
 import { Redirect, Tabs, useRouter } from "expo-router";
+import * as Notifications from "expo-notifications";
 import { BarChart3, Calendar, CalendarDays, ChevronLeft, CircleCheck, Home, User } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
@@ -32,6 +34,18 @@ function BackButton() {
 export default function AppLayout() {
   const { status } = useAuth();
   const c = useColors();
+  const router = useRouter();
+
+  // Tapping a reminder opens the relevant screen.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const type = response.notification.request.content.data?.type as string | undefined;
+      if (type === "habits") router.push("/habits");
+      else if (type === "review") router.push("/week");
+      else if (type === "quarter") router.push("/");
+    });
+    return () => sub.remove();
+  }, [router]);
 
   if (status === "loading") return <LoadingScreen />;
   if (status !== "authenticated") return <Redirect href="/login" />;
@@ -75,6 +89,17 @@ export default function AppLayout() {
         name="profile"
         options={{
           title: "Profile",
+          href: null,
+          headerRight: () => null,
+          headerLeft: () => <BackButton />,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      {/* Opened from Profile → Notifications. */}
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notifications",
           href: null,
           headerRight: () => null,
           headerLeft: () => <BackButton />,
