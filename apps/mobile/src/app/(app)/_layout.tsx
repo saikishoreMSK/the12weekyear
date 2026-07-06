@@ -6,6 +6,7 @@ import { BarChart3, Calendar, CalendarDays, ChevronLeft, CircleCheck, Home, User
 
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
+import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
 import { useColors } from "@/theme";
 
 /** Top-right button (on every tab) that opens the Profile screen. */
@@ -35,6 +36,9 @@ export default function AppLayout() {
   const { status } = useAuth();
   const c = useColors();
   const router = useRouter();
+
+  // Keep the Android home-screen widgets in sync with the latest data (no-op on web/iOS).
+  useSyncWidgets();
 
   // Tapping a reminder opens the relevant screen.
   useEffect(() => {

@@ -248,5 +248,20 @@ Verified: mobile typecheck + Android `expo export` (~3770 modules) green.
 Note: preset time slots (not a free time-picker) to avoid an extra native dep; server push (FCM)
 remains out of scope.
 
-Next: **M6 — interactive Android home-screen widgets** (also needs a dev build), then M7 polish,
-M8 release. A good point to do the **first EAS dev build** to validate M5 + M6 on-device.
+**M6 complete** (display widgets; code-complete, needs a dev build to see). Verified: mobile
+typecheck, Android export (3798 modules), **and web export (2832 modules — widget lib correctly
+excluded)** all green.
+- **4 home-screen widgets** via `react-native-android-widget` (JSX → native, no Kotlin): **Today's
+  habits**, **Quarter progress**, **This week**, **Quote of the day**. All **tap-to-open** the app
+  (`clickAction="OPEN_APP"`), resizable, theme-aware (light/dark via `Appearance`).
+- **Data flow**: the app writes a small `WidgetSnapshot` to AsyncStorage on data change and pushes a
+  live `requestWidgetUpdate`; a headless **task handler** renders widgets from that snapshot even when
+  the app is closed (quote computed directly). OS also refreshes every 30 min.
+- **Web-safe isolation**: all `react-native-android-widget` usage is behind platform files
+  (`register.android.ts` / `use-sync-widgets.android.tsx` with no-op `.ts` fallbacks) + a custom
+  `index.js` entry, so the web bundle never imports the native lib (confirmed by web export).
+- Interactive tap-to-tick was intentionally **not** included (display + tap-to-open only, per scope).
+
+Next: **M7 — polish** (biometric lock, haptics, app shortcuts, share card, splash/icon), then **M8 —
+release**: the first **EAS dev build** validates M5 (notifications) + M6 (widgets) on-device, then a
+production build → Play Store.
