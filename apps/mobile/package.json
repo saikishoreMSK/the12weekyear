@@ -2,6 +2,12 @@
   "name": "@twy/mobile",
   "main": "index.js",
   "version": "1.0.0",
+  "expo": {
+    "install": {
+      "comment": "react/react-dom pinned to 19.2.4 to match the Next.js web app; a standalone build ships its own React, so the Expo Go 19.2.3 pin is not a concern.",
+      "exclude": ["react", "react-dom"]
+    }
+  },
   "dependencies": {
     "@expo/ui": "~57.0.3",
     "@hookform/resolvers": "^5.4.0",

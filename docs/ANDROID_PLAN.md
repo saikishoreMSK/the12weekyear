@@ -275,6 +275,21 @@ export (3818 modules), web export (2857 — all native libs web-safe) green.
 
 Deferred to M8: a real **app icon / splash** (needs a logo asset from the user).
 
-Next: **M8 — release**: first **EAS cloud dev build** to validate M5 (notifications) + M6 (widgets) +
-M7 (haptics/share/shortcuts/lock) on-device; finalize icon/splash; then a production build → Play
-Store internal testing.
+**M8 — release: in progress (build config ready; the cloud build itself is user-driven).**
+- **App icon**: generated a clean **"12" monogram** (white on black `#0b0b0c`) via sharp from an SVG —
+  the supplied `logo.png` is a text poster, unsuitable as an icon but great for splash. Icon +
+  adaptive foreground + favicon written to `assets/images/`; `app.json` icon/adaptiveIcon/favicon
+  updated.
+- **Splash**: the `logo.png` poster on its off-white background (`#f6f6f4`), width 260.
+- **`eas.json`** with `development` (dev client), `preview` (standalone internal APK), and
+  `production` (AAB) profiles.
+- `expo config` resolves; `expo-doctor` 17/20 (the 3 "fails" are the corporate-proxy TLS block on
+  Expo's API + the intentional React 19.2.4 pin, now marked via `expo.install.exclude`).
+
+Remaining (needs the user + a non-corporate network, e.g. phone hotspot, since the proxy intercepts
+TLS to expo.dev): `eas login` → `eas init` → **`eas build --profile preview --platform android`**
+(standalone APK — no Metro, sidesteps the Wi-Fi/Metro connection issue) → install + validate M5/M6/M7
+on-device → then `--profile production` (AAB) → Play Console internal testing → release.
+
+**Status: the app (M0–M7) is feature-complete and committed on `android-app`; main untouched.** The
+web app remains untouched and deployable throughout.
