@@ -15,7 +15,11 @@
   "dependencies": {
     "zod": "^4.4.3"
   },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5"
+  },
   "devDependencies": {
+    "@tanstack/react-query": "^5.101.2",
     "typescript": "^5"
   }
 }
