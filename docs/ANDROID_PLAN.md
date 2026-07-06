@@ -262,6 +262,19 @@ excluded)** all green.
   `index.js` entry, so the web bundle never imports the native lib (confirmed by web export).
 - Interactive tap-to-tick was intentionally **not** included (display + tap-to-open only, per scope).
 
-Next: **M7 — polish** (biometric lock, haptics, app shortcuts, share card, splash/icon), then **M8 —
-release**: the first **EAS dev build** validates M5 (notifications) + M6 (widgets) on-device, then a
-production build → Play Store.
+**M7 complete** (native polish; needs a dev build to feel/see). Verified: mobile typecheck, Android
+export (3818 modules), web export (2857 — all native libs web-safe) green.
+- **Haptics** (`expo-haptics`): light tap when toggling a habit or goal (Habits, Week grid, GoalRow).
+- **Share progress** (`react-native-view-shot` + `expo-sharing`): Profile → Share progress → a
+  branded card (quarter score + streak) captured to PNG and shared via the OS share sheet.
+- **App shortcuts** (`expo-quick-actions`): long-press the app icon → Habits / This week / Dashboard
+  (via `useQuickActionRouting` in the `(app)` layout). Web-safe (lib ships a web no-op).
+- **Biometric app-lock** (`expo-local-authentication`): opt-in toggle in Profile (default off); a
+  `LockGate` in the `(app)` layout requires fingerprint/face on launch + after backgrounding. Fails
+  open on error; always unlocked on web.
+
+Deferred to M8: a real **app icon / splash** (needs a logo asset from the user).
+
+Next: **M8 — release**: first **EAS cloud dev build** to validate M5 (notifications) + M6 (widgets) +
+M7 (haptics/share/shortcuts/lock) on-device; finalize icon/splash; then a production build → Play
+Store internal testing.

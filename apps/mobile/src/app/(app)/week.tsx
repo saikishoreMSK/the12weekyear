@@ -13,6 +13,7 @@ import {
 } from "@twy/core";
 import { Screen } from "@/components/screen";
 import { GoalRow } from "@/components/goal-row";
+import { tapHaptic } from "@/lib/haptics";
 import { useColors } from "@/theme";
 
 const TODAY = toIsoDate(new Date());
@@ -153,7 +154,10 @@ export default function WeekScreen() {
                     <Pressable
                       key={iso}
                       disabled={future}
-                      onPress={() => actions.toggle(h, iso)}
+                      onPress={() => {
+                        tapHaptic();
+                        actions.toggle(h, iso);
+                      }}
                       hitSlop={6}
                       className="w-7 items-center py-1"
                     >

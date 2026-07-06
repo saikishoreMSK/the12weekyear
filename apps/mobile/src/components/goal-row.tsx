@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 
 import type { Goal, GoalStatus } from "@twy/core";
+import { tapHaptic } from "@/lib/haptics";
 
 const STATUS_STYLE: Record<GoalStatus, string> = {
   DONE: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
@@ -14,7 +15,10 @@ export function GoalRow({ goal, onToggle }: { goal: Goal; onToggle: () => void }
   return (
     <View className="flex-row items-center gap-3 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
       <Pressable
-        onPress={onToggle}
+        onPress={() => {
+          tapHaptic();
+          onToggle();
+        }}
         hitSlop={6}
         className={`h-6 w-6 items-center justify-center rounded-full border-2 active:opacity-70 ${
           goal.done ? "border-emerald-500 bg-emerald-500" : "border-neutral-300 dark:border-neutral-600"

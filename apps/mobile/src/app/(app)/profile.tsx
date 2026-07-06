@@ -1,13 +1,14 @@
-import type { ComponentType } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useState, type ComponentType } from "react";
+import { Alert, Pressable, Switch, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
-import { BarChart3, Bell, ChevronRight, RefreshCw, Sparkles } from "lucide-react-native";
+import { BarChart3, Bell, ChevronRight, Lock, RefreshCw, Share2, Sparkles } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { Screen } from "@/components/screen";
 import { useIsOnline } from "@/lib/query";
 import { usePendingCount } from "@/lib/outbox";
+import { isBiometricAvailable, loadLockPref, saveLockPref } from "@/features/security/lock";
 import { useColors } from "@/theme";
 
 type IconType = ComponentType<{ color?: string; size?: number }>;
@@ -15,10 +16,25 @@ type IconType = ComponentType<{ color?: string; size?: number }>;
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const c = useColors();
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const online = useIsOnline();
   const pending = usePendingCount();
   const syncValue = !online ? "Offline" : pending > 0 ? `${pending} pending` : "Synced";
+
+  const [appLock, setAppLock] = useState(false);
+  useEffect(() => {
+    loadLockPref().then(setAppLock);
+  }, []);
+
+  async function toggleLock(value: boolean) {
+    if (value && !(await isBiometricAvailable())) {
+      Alert.alert("Not available", "Set up a fingerprint or face unlock on your device first.");
+      return;
+    }
+    setAppLock(value);
+    await saveLockPref(value);
+  }
 
   return (
     <Screen>
@@ -36,9 +52,24 @@ export default function ProfileScreen() {
       {/* Settings list */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Row icon={BarChart3} label="Analytics" first onPress={() => router.push("/analytics")} />
+        <Row icon={Share2} label="Share progress" onPress={() => router.push("/share")} />
         <Row icon={RefreshCw} label="Sync" value={syncValue} />
         <Row icon={Bell} label="Notifications" onPress={() => router.push("/notifications")} />
         <Row icon={Sparkles} label="Go Premium" value="Coming soon" disabled />
+      </View>
+
+      {/* Security */}
+      <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <View className="flex-row items-center gap-3 p-4">
+          <Lock color={c.muted} size={18} />
+          <View className="flex-1">
+            <Text className="text-neutral-900 dark:text-neutral-50">App lock</Text>
+            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+              Require fingerprint / face to open the app
+            </Text>
+          </View>
+          <Switch value={appLock} onValueChange={toggleLock} trackColor={{ true: c.primary, false: c.border }} />
+        </View>
       </View>
 
       <Pressable

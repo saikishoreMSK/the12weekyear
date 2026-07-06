@@ -89,7 +89,9 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-quick-actions"
     ],
     "experiments": {
       "typedRoutes": false,

@@ -7,6 +7,8 @@ import { BarChart3, Calendar, CalendarDays, ChevronLeft, CircleCheck, Home, User
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
 import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
+import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
+import { LockGate } from "@/features/security/lock-gate";
 import { useColors } from "@/theme";
 
 /** Top-right button (on every tab) that opens the Profile screen. */
@@ -39,6 +41,8 @@ export default function AppLayout() {
 
   // Keep the Android home-screen widgets in sync with the latest data (no-op on web/iOS).
   useSyncWidgets();
+  // App-icon shortcuts (long-press) → deep-link into the app (no-op on web).
+  useQuickActions();
 
   // Tapping a reminder opens the relevant screen.
   useEffect(() => {
@@ -55,6 +59,7 @@ export default function AppLayout() {
   if (status !== "authenticated") return <Redirect href="/login" />;
 
   return (
+    <LockGate>
     <Tabs
       screenOptions={{
         headerShown: true,
@@ -110,6 +115,18 @@ export default function AppLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
+      {/* Opened from Profile → Share progress. */}
+      <Tabs.Screen
+        name="share"
+        options={{
+          title: "Share progress",
+          href: null,
+          headerRight: () => null,
+          headerLeft: () => <BackButton />,
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
+    </LockGate>
   );
 }

@@ -11,6 +11,7 @@ import {
   type Habit,
 } from "@twy/core";
 import { Screen } from "@/components/screen";
+import { tapHaptic } from "@/lib/haptics";
 import { useColors } from "@/theme";
 
 const TODAY = toIsoDate(new Date());
@@ -88,7 +89,15 @@ export default function HabitsScreen() {
           ) : (
             <View className="gap-3">
               {active.map((h) => (
-                <HabitRow key={h.id} habit={h} onToggle={() => actions.toggle(h, selected)} done={h.completionDates.includes(selected)} />
+                <HabitRow
+                  key={h.id}
+                  habit={h}
+                  onToggle={() => {
+                    tapHaptic();
+                    actions.toggle(h, selected);
+                  }}
+                  done={h.completionDates.includes(selected)}
+                />
               ))}
             </View>
           )}
