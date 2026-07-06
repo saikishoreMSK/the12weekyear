@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Check } from "lucide-react";
 
-import { quarterApi } from "@/features/quarter/api";
 import type { Goal, GoalStatus } from "@/features/quarter/types";
 import { weekRangeLabel } from "@/features/quarter/week-dates";
+import { useGoalActions } from "@/features/quarter/queries";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -13,8 +12,8 @@ interface Props {
   quarterId: string;
   quarterStart: string;
   quarterEnd: string;
+  currentWeek: number | null;
   goal: Goal;
-  onChanged: () => void;
 }
 
 function StatusChip({ status }: { status: GoalStatus }) {
@@ -28,36 +27,15 @@ function StatusChip({ status }: { status: GoalStatus }) {
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
 }
 
-export function GoalItem({ quarterId, quarterStart, quarterEnd, goal, onChanged }: Props) {
-  const [busy, setBusy] = useState(false);
+export function GoalItem({ quarterId, quarterStart, quarterEnd, currentWeek, goal }: Props) {
+  const { toggle, remove } = useGoalActions();
   const range = weekRangeLabel(quarterStart, quarterEnd, goal.week);
-
-  async function toggleDone() {
-    setBusy(true);
-    try {
-      await quarterApi.updateGoal(quarterId, goal.id, { done: !goal.done });
-      onChanged();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function remove() {
-    setBusy(true);
-    try {
-      await quarterApi.removeGoal(quarterId, goal.id);
-      onChanged();
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="bg-card flex items-center gap-3 rounded-lg border p-3">
       <button
         type="button"
-        onClick={toggleDone}
-        disabled={busy}
+        onClick={() => toggle(quarterId, goal, currentWeek)}
         aria-pressed={goal.done}
         aria-label={goal.done ? "Mark not done" : "Mark done"}
         className={cn(
@@ -81,7 +59,7 @@ export function GoalItem({ quarterId, quarterStart, quarterEnd, goal, onChanged 
       </div>
 
       <StatusChip status={goal.status} />
-      <Button size="sm" variant="ghost" className="text-destructive" onClick={remove} disabled={busy}>
+      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(quarterId, goal.id)}>
         Delete
       </Button>
     </div>

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 
 import { quoteOfTheDay, useDashboard, type QuarterTile } from "@twy/core";
+import { Screen } from "@/components/screen";
 import { useColors } from "@/theme";
 
 export default function DashboardScreen() {
@@ -15,10 +15,8 @@ export default function DashboardScreen() {
   const quote = quoteOfTheDay();
 
   return (
-    <View className="flex-1 bg-white dark:bg-black">
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }}>
-          {/* Quote of the day */}
+    <Screen>
+      {/* Quote of the day */}
           <View className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
             <Text className="text-base leading-6 text-neutral-800 dark:text-neutral-100">
               “{quote.text}”
@@ -66,9 +64,7 @@ export default function DashboardScreen() {
               ))}
             </View>
           )}
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+    </Screen>
   );
 }
 

@@ -17,8 +17,6 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      <Text className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Profile</Text>
-
       {/* Account */}
       <View className="gap-1 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">

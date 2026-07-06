@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { HABITS_KEY } from "@/features/habit/queries";
 import { onCompletionError } from "@/features/habit/completion-writer";
+import { onGoalError } from "@/features/quarter/goal-writer";
 
 /**
  * App-wide client cache for GET requests. Data is reused across navigations (no refetch within
@@ -24,10 +25,14 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       }),
   );
 
-  // If a background habit-completion write fails, re-fetch habits so the UI reconciles with the server.
+  // If a background write fails, re-fetch so the UI reconciles with the server.
   useEffect(() => {
     onCompletionError(() => client.invalidateQueries({ queryKey: HABITS_KEY }));
-    return () => onCompletionError(null);
+    onGoalError(() => client.invalidateQueries({ queryKey: ["quarter"] }));
+    return () => {
+      onCompletionError(null);
+      onGoalError(null);
+    };
   }, [client]);
 
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;

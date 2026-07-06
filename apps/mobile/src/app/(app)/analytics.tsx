@@ -1,6 +1,4 @@
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
 
 import { lastNDates, useAnalytics, type Analytics, type HeatmapDay } from "@twy/core";
 import { Screen } from "@/components/screen";
@@ -16,17 +14,9 @@ function titleCase(day: string | null): string {
 export default function AnalyticsScreen() {
   const { data, isError } = useAnalytics();
   const c = useColors();
-  const router = useRouter();
 
   return (
     <Screen>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      <View className="flex-row items-center gap-2">
-        <ChevronLeft color={c.text} size={22} onPress={() => router.back()} />
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Analytics</Text>
-      </View>
-
       {isError && <Text className="text-red-500">Couldn&apos;t load analytics.</Text>}
       {!data && !isError && (
         <View className="py-16">

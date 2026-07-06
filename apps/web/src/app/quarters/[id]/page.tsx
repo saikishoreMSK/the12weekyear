@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { quarterApi } from "@/features/quarter/api";
-import type { Quarter } from "@/features/quarter/types";
+import { useQuarter } from "@/features/quarter/queries";
 import { AddGoalForm } from "@/features/quarter/components/add-goal-form";
 import { GoalItem } from "@/features/quarter/components/goal-item";
 import { QuarterHabitRow } from "@/features/quarter/components/quarter-habit-row";
@@ -19,16 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function QuarterDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [quarter, setQuarter] = useState<Quarter | null>(null);
-  const [error, setError] = useState(false);
-
-  const load = useCallback(() => {
-    quarterApi.get(id).then(setQuarter).catch(() => setError(true));
-  }, [id]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: quarter, isError: error, refetch } = useQuarter(id);
 
   async function deleteQuarter() {
     if (!quarter) return;
@@ -124,7 +114,7 @@ export default function QuarterDetailPage() {
               quarterEnd={quarter.endDate}
               totalWeeks={quarter.totalWeeks}
               takenWeeks={quarter.goals.map((g) => g.week)}
-              onAdded={load}
+              onAdded={() => refetch()}
             />
           </div>
           {quarter.goals.length === 0 ? (
@@ -139,8 +129,8 @@ export default function QuarterDetailPage() {
                   quarterId={quarter.id}
                   quarterStart={quarter.startDate}
                   quarterEnd={quarter.endDate}
+                  currentWeek={quarter.currentWeek}
                   goal={goal}
-                  onChanged={load}
                 />
               ))}
             </div>

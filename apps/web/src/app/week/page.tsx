@@ -95,8 +95,8 @@ function WeekView() {
                     quarterId={quarter.id}
                     quarterStart={quarter.startDate}
                     quarterEnd={quarter.endDate}
+                    currentWeek={quarter.currentWeek}
                     goal={goal}
-                    onChanged={() => refetch()}
                   />
                 ) : (
                   <AddGoalForm

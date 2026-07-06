@@ -27,8 +27,6 @@ export default function HabitsScreen() {
 
   return (
     <Screen>
-      <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Habits</Text>
-
       {isError && <Text className="text-red-500">Couldn&apos;t load your habits.</Text>}
       {!habits && !isError && (
         <View className="py-16">
