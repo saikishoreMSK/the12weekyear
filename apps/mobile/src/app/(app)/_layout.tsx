@@ -42,6 +42,8 @@ export default function AppLayout() {
         name="profile"
         options={{ title: "Profile", tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }}
       />
+      {/* Reachable from Profile, but not a top-level tab. */}
+      <Tabs.Screen name="analytics" options={{ href: null }} />
     </Tabs>
   );
 }

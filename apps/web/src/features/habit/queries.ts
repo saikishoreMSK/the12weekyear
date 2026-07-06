@@ -1,18 +1,13 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { HABITS_KEY, useHabits, type Habit } from "@twy/core";
 import { toIsoDate } from "@/lib/date";
-import { habitApi } from "./api";
 import { writeCompletion } from "./completion-writer";
-import type { Habit } from "./types";
 
-export const HABITS_KEY = ["habits"] as const;
-
-/** Cached list of the user's habits (shared by /habits and /week). */
-export function useHabits() {
-  return useQuery({ queryKey: HABITS_KEY, queryFn: () => habitApi.list() });
-}
+// The read hook + key now live in @twy/core (shared with mobile); re-exported for existing imports.
+export { HABITS_KEY, useHabits };
 
 /** Apply a completion change to a habit locally (optimistic) before the server confirms. */
 function applyLocal(habit: Habit, dateIso: string, done: boolean): Habit {
@@ -27,7 +22,10 @@ function applyLocal(habit: Habit, dateIso: string, done: boolean): Habit {
   };
 }
 
-/** Mutations that keep the cached habit list in sync (optimistically). */
+/**
+ * Mutations that keep the cached habit list in sync (optimistically).
+ * Stays app-local for now; migrates into @twy/core with the mobile mutation work (M3).
+ */
 export function useHabitActions() {
   const qc = useQueryClient();
 

@@ -191,5 +191,21 @@ green, Android `expo export` green (1400 modules).
 On-device check: register a test account → OTP email → verify → land signed in; login/logout;
 forgot/reset. Styling is StyleSheet (light/dark aware); NativeWind + real Dashboard land in **M2**.
 
-Next: **M2 — read screens + bottom tab bar** (Dashboard / Quarter / Week / Habits / Profile),
-online-first, migrating quarter/habit/analytics types+api+queries into `@twy/core`.
+**M2 complete** (pending on-device confirmation). Verified: web build, core + mobile typecheck,
+Android `expo export` (~3678 modules) green.
+- **NativeWind v4** (Tailwind v3 preset) wired via babel/metro + `global.css`; **TanStack Query**
+  provider; **lucide-react-native** icons.
+- **Bottom tab bar** (5 tabs): Dashboard / Quarter / Week / Habits / Profile. Analytics is a hidden
+  route reached from Profile.
+- Read screens, online-first: **Dashboard** (2×2 year grid + quote + year nav), **Quarter** (score
+  card + weekly goals + today's habits), **Week** (week selector + goal + habit-completion grid),
+  **Habits** (7-day strip + habit list), **Profile** (account + settings list + sign out),
+  **Analytics** (stat cards + 12-week heatmap + weekday bars).
+- Core migrations (all re-exported by web via shims — no drift): quarter, habit, analytics, quote
+  (`types`/`api`/read query hooks), plus `date` and `week-dates` utils. Habit **mutation** hook
+  (`useHabitActions` + `completion-writer`) stays app-local until M3.
+
+Everything is **read-only** this phase (no toggles/edits yet).
+
+Next: **M3 — interactions + optimistic UI** (habit toggles, goal done, add habit/quarter), migrating
+`useHabitActions` + the debounced `completion-writer` into `@twy/core`.

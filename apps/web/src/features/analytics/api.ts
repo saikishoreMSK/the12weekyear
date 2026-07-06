@@ -1,6 +1,2 @@
-import { apiClient } from "@/lib/api/client";
-import type { Analytics } from "./types";
-
-export const analyticsApi = {
-  get: () => apiClient.get<Analytics>("/api/v1/analytics"),
-};
+/** Analytics API now lives in @twy/core (shared with mobile). Re-exported for existing imports. */
+export { analyticsApi } from "@twy/core";
