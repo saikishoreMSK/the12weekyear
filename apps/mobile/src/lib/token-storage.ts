@@ -1,26 +1,39 @@
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 import type { TokenStorage } from "@twy/core";
 
 /**
- * Secure token storage for the mobile app (implements the @twy/core TokenStorage seam):
+ * Cross-platform token storage (implements the @twy/core TokenStorage seam):
  *  - access token  → in-memory only (re-obtained via refresh on cold start).
- *  - refresh token → expo-secure-store (Android Keystore / iOS Keychain), read back asynchronously.
- *
- * The async reads/writes are why the seam allows Promise-returning methods.
+ *  - refresh token → persisted:
+ *      • native (Android/iOS) → expo-secure-store (Keystore/Keychain), read back asynchronously.
+ *      • web (dev preview)    → localStorage, since SecureStore has no web implementation.
  */
 const REFRESH_TOKEN_KEY = "twy.refreshToken";
 
 let accessToken: string | null = null;
 
+interface WebStore {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+// Only defined on web; native never touches it.
+const webStore: WebStore | undefined =
+  Platform.OS === "web" ? (globalThis as { localStorage?: WebStore }).localStorage : undefined;
+
 export const tokenStorage: TokenStorage = {
   getAccessToken: () => accessToken,
 
-  getRefreshToken: () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
+  getRefreshToken: () =>
+    webStore ? webStore.getItem(REFRESH_TOKEN_KEY) : SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
 
   set: async (access, refresh) => {
     accessToken = access;
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
+    if (webStore) webStore.setItem(REFRESH_TOKEN_KEY, refresh);
+    else await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
   },
 
   setAccessToken: (access) => {
@@ -29,6 +42,7 @@ export const tokenStorage: TokenStorage = {
 
   clear: async () => {
     accessToken = null;
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    if (webStore) webStore.removeItem(REFRESH_TOKEN_KEY);
+    else await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   },
 };

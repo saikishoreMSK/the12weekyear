@@ -125,10 +125,12 @@ async function send<T>(
     unauthorizedHandler?.();
   }
 
-  const envelope = (await response.json()) as ApiResponse<T>;
+  // Some endpoints (e.g. logout) return an empty body — don't assume JSON is always present.
+  const raw = await response.text();
+  const envelope = (raw ? (JSON.parse(raw) as ApiResponse<T>) : null);
 
-  if (!response.ok || !envelope.success) {
-    const error = envelope.error;
+  if (!response.ok || (envelope && !envelope.success)) {
+    const error = envelope?.error;
     throw new ApiException(
       error?.message ?? "Request failed",
       error?.code ?? "UNKNOWN",
@@ -136,7 +138,7 @@ async function send<T>(
     );
   }
 
-  return envelope.data as T;
+  return (envelope ? envelope.data : undefined) as T;
 }
 
 function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
