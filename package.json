@@ -7,12 +7,19 @@
     "apps/*",
     "packages/*"
   ],
+  "//dependencies": "expo-router is declared here so the root-hoisted @expo/cli can resolve it during `expo start` route-manifest generation. Metro still bundles the app's copy. See docs/ANDROID_PLAN.md.",
+  "dependencies": {
+    "expo-router": "~57.0.3"
+  },
   "scripts": {
     "dev": "npm run dev --workspace @twy/web",
     "dev:web": "npm run dev --workspace @twy/web",
     "build:web": "npm run build --workspace @twy/web",
     "start:web": "npm run start --workspace @twy/web",
-    "lint:web": "npm run lint --workspace @twy/web"
+    "lint:web": "npm run lint --workspace @twy/web",
+    "typecheck:core": "npm run typecheck --workspace @twy/core",
+    "start:mobile": "npm run start --workspace @twy/mobile",
+    "android": "npm run android --workspace @twy/mobile"
   },
   "engines": {
     "node": ">=20"

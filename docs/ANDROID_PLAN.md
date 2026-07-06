@@ -143,15 +143,36 @@ Same rhythm as the web build: explain each phase before coding, finish and verif
 - **M8 — Release.** EAS build, Play Store internal testing, Sentry, versioning → production.
 
 ## Status
-**M0 in progress.** Done & verified (web build + `@twy/core` typecheck green):
-- Monorepo established with **npm workspaces**; `frontend/` moved to `apps/web` (now the `@twy/web`
-  workspace); root `package.json`, `.gitignore`, and lockfile set up.
-- Render web service repointed to build from the monorepo root (`render.yaml`).
-- **`@twy/core`** created and consumed by web: the API **envelope types**, the platform-agnostic
-  **API client**, and the **`TokenStorage` seam** (base URL + storage injected via
-  `configureApiClient`). Web injects localStorage; mobile will inject expo-secure-store. Web keeps a
-  thin shim at `@/lib/api/client` so existing imports are unchanged.
+**M0 complete** (pending on-device confirmation). Verified: web build green, `@twy/core` typecheck
+green, mobile typecheck green, **Android bundle exports green** (Metro resolves `@twy/core` across
+the monorepo).
 
-Next: **M0 Step 4** — scaffold `apps/mobile` (Expo). Feature DTO types / api / queries / zod and the
-backend calculators will migrate into `@twy/core` incrementally as the mobile app consumes them.
-Changes are **not yet committed** (awaiting review).
+- Monorepo established with **npm workspaces**; `frontend/` → `apps/web` (`@twy/web`); root
+  `package.json`, `.gitignore`, single root lockfile.
+- Render web service repointed to build from the monorepo root (`render.yaml`).
+- **`@twy/core`**: API envelope types, platform-agnostic API client, and the **`TokenStorage` seam**
+  (base URL + storage injected via `configureApiClient`). Web injects localStorage via a thin shim at
+  `@/lib/api/client` (existing imports unchanged).
+- **`apps/mobile`** (`@twy/mobile`): Expo SDK 57 (Expo Router, RN 0.86, React 19), monorepo
+  `metro.config.js`, app identity in `app.json` (name/slug/scheme/`com.twelveweekyear.app`),
+  `EXPO_PUBLIC_API_BASE_URL` env (defaults to the Render backend so a phone can reach it), an M0
+  in-memory `TokenStorage` stub (SecureStore comes in M1), and a **health-ping home screen** that
+  calls `/api/v1/health` through `@twy/core`. Demo template screens trimmed.
+
+On-device check: run `npm run start:mobile` (add `-- --tunnel` if corporate Wi-Fi isolates devices)
+and open in Expo Go — expect "API reachable ✓".
+
+**Monorepo hoisting notes (learned the hard way):**
+- React is unified to **19.2.4** across the workspace. Next 16 requires `^19.2.4`; `react-native`
+  0.86's peer is `^19.2.3`, which accepts 19.2.4 — so one version satisfies both. (`expo install
+  --check` softly suggests 19.2.3; ignore — RN's peer range governs.)
+- `@expo/cli` is hoisted to the repo root but `expo start` `require()`s `expo-router` (and subpaths
+  like `expo-router/internal/routing`) from there. Transitive conflicts (e.g. web pulls
+  `react-is@16` to root while `expo-router` needs `^19.1`) kept nesting `expo-router` under
+  `apps/mobile`, so the CLI couldn't find it. Fix: **declare `expo-router` in the root
+  `package.json`** so it resolves at root for the CLI; Metro still bundles it fine. Also set
+  `experiments.typedRoutes: false` in `app.json` (its type generator hit the same resolution path).
+
+Next: **M1 — Auth** (register → OTP verify → login → forgot/reset), swapping the stub for
+expo-secure-store. Feature DTO types / api / queries / zod and the backend calculators migrate into
+`@twy/core` incrementally as mobile consumes them.
