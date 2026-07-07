@@ -21,19 +21,20 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
 
   const colors = WIDGET_COLORS[Appearance.getColorScheme() === "dark" ? "dark" : "light"];
   const snapshot = await loadWidgetSnapshot();
+  const size = { width: widgetInfo.width, height: widgetInfo.height };
 
   switch (widgetInfo.widgetName) {
     case "Quote":
-      renderWidget(<QuoteWidget quote={quoteOfTheDay()} colors={colors} />);
+      renderWidget(<QuoteWidget quote={quoteOfTheDay()} colors={colors} {...size} />);
       break;
     case "Quarter":
-      renderWidget(<QuarterWidget quarter={snapshot?.quarter ?? null} colors={colors} />);
+      renderWidget(<QuarterWidget quarter={snapshot?.quarter ?? null} colors={colors} {...size} />);
       break;
     case "Week":
-      renderWidget(<WeekWidget week={snapshot?.week ?? null} colors={colors} />);
+      renderWidget(<WeekWidget week={snapshot?.week ?? null} colors={colors} {...size} />);
       break;
     case "TodayHabits":
-      renderWidget(<TodayHabitsWidget habits={snapshot?.habits ?? []} colors={colors} />);
+      renderWidget(<TodayHabitsWidget habits={snapshot?.habits ?? []} colors={colors} {...size} />);
       break;
   }
 }

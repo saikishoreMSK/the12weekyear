@@ -47,22 +47,22 @@ export function useSyncWidgets(): void {
     const notFound = () => {};
     void requestWidgetUpdate({
       widgetName: "Quote",
-      renderWidget: () => <QuoteWidget quote={quoteOfTheDay()} colors={colors} />,
+      renderWidget: (info) => <QuoteWidget quote={quoteOfTheDay()} colors={colors} width={info.width} height={info.height} />,
       widgetNotFound: notFound,
     });
     void requestWidgetUpdate({
       widgetName: "Quarter",
-      renderWidget: () => <QuarterWidget quarter={quarterSnap} colors={colors} />,
+      renderWidget: (info) => <QuarterWidget quarter={quarterSnap} colors={colors} width={info.width} height={info.height} />,
       widgetNotFound: notFound,
     });
     void requestWidgetUpdate({
       widgetName: "Week",
-      renderWidget: () => <WeekWidget week={weekSnap} colors={colors} />,
+      renderWidget: (info) => <WeekWidget week={weekSnap} colors={colors} width={info.width} height={info.height} />,
       widgetNotFound: notFound,
     });
     void requestWidgetUpdate({
       widgetName: "TodayHabits",
-      renderWidget: () => <TodayHabitsWidget habits={habitsSnap} colors={colors} />,
+      renderWidget: (info) => <TodayHabitsWidget habits={habitsSnap} colors={colors} width={info.width} height={info.height} />,
       widgetNotFound: notFound,
     });
   }, [quarter, habits, colors]);

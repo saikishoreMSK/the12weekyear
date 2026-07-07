@@ -17,10 +17,17 @@ export const WIDGET_COLORS: { light: WidgetColors; dark: WidgetColors } = {
   dark: { card: "#161618", text: "#f5f5f5", muted: "#9ca3af", primary: "#3b82f6", done: "#22c55e", track: "#27272a" },
 };
 
-function root(c: WidgetColors, justify: "center" | "space-between" = "space-between") {
+/** Common props: the actual widget size (dp) is passed so the root fills the frame. */
+interface Base {
+  colors: WidgetColors;
+  width: number;
+  height: number;
+}
+
+function rootStyle(c: WidgetColors, width: number, height: number, justify: "center" | "space-between") {
   return {
-    height: "match_parent" as const,
-    width: "match_parent" as const,
+    height,
+    width,
     backgroundColor: c.card,
     borderRadius: 16,
     padding: 14,
@@ -30,45 +37,45 @@ function root(c: WidgetColors, justify: "center" | "space-between" = "space-betw
   };
 }
 
-export function QuoteWidget({ quote, colors: c }: { quote: Quote; colors: WidgetColors }) {
+export function QuoteWidget({ quote, colors: c, width, height }: Base & { quote: Quote }) {
   return (
-    <FlexWidget clickAction="OPEN_APP" style={root(c, "center")}>
+    <FlexWidget clickAction="OPEN_APP" style={rootStyle(c, width, height, "center")}>
       <TextWidget text={`“${quote.text}”`} style={{ fontSize: 14, color: c.text }} />
       <TextWidget text={`— ${quote.author}`} style={{ fontSize: 11, color: c.muted }} />
     </FlexWidget>
   );
 }
 
-export function QuarterWidget({ quarter, colors: c }: { quarter: WidgetSnapshot["quarter"]; colors: WidgetColors }) {
+export function QuarterWidget({ quarter, colors: c, width, height }: Base & { quarter: WidgetSnapshot["quarter"] }) {
   if (!quarter) {
     return (
-      <FlexWidget clickAction="OPEN_APP" style={root(c, "center")}>
+      <FlexWidget clickAction="OPEN_APP" style={rootStyle(c, width, height, "center")}>
         <TextWidget text="No quarter planned" style={{ fontSize: 14, color: c.muted }} />
       </FlexWidget>
     );
   }
   return (
-    <FlexWidget clickAction="OPEN_APP" style={root(c)}>
+    <FlexWidget clickAction="OPEN_APP" style={rootStyle(c, width, height, "space-between")}>
       <TextWidget text={`${quarter.label} ${quarter.year}`} style={{ fontSize: 13, color: c.muted }} />
       <TextWidget text={`${quarter.score}%`} style={{ fontSize: 34, fontWeight: "bold", color: c.text }} />
       <TextWidget
-        text={quarter.currentDay ? `Day ${quarter.currentDay} / ${quarter.totalDays}` : ""}
+        text={quarter.currentDay ? `Day ${quarter.currentDay} / ${quarter.totalDays}` : "quarter score"}
         style={{ fontSize: 12, color: c.muted }}
       />
     </FlexWidget>
   );
 }
 
-export function WeekWidget({ week, colors: c }: { week: WidgetSnapshot["week"]; colors: WidgetColors }) {
+export function WeekWidget({ week, colors: c, width, height }: Base & { week: WidgetSnapshot["week"] }) {
   if (!week) {
     return (
-      <FlexWidget clickAction="OPEN_APP" style={root(c, "center")}>
+      <FlexWidget clickAction="OPEN_APP" style={rootStyle(c, width, height, "center")}>
         <TextWidget text="No quarter planned" style={{ fontSize: 14, color: c.muted }} />
       </FlexWidget>
     );
   }
   return (
-    <FlexWidget clickAction="OPEN_APP" style={root(c)}>
+    <FlexWidget clickAction="OPEN_APP" style={rootStyle(c, width, height, "space-between")}>
       <TextWidget text={`Week ${week.number}`} style={{ fontSize: 15, fontWeight: "bold", color: c.text }} />
       <TextWidget
         text={week.goalTitle ?? "No goal set"}
@@ -86,16 +93,22 @@ export function WeekWidget({ week, colors: c }: { week: WidgetSnapshot["week"]; 
   );
 }
 
-export function TodayHabitsWidget({ habits, colors: c }: { habits: WidgetSnapshot["habits"]; colors: WidgetColors }) {
+export function TodayHabitsWidget({ habits, colors: c, width, height }: Base & { habits: WidgetSnapshot["habits"] }) {
   const shown = habits.slice(0, 4);
   return (
-    <FlexWidget clickAction="OPEN_APP" style={root(c, habits.length ? "space-between" : "center")}>
+    <FlexWidget
+      clickAction="OPEN_APP"
+      style={rootStyle(c, width, height, shown.length ? "space-between" : "center")}
+    >
       <TextWidget text="Today" style={{ fontSize: 15, fontWeight: "bold", color: c.text }} />
       {shown.length === 0 ? (
         <TextWidget text="No habits yet" style={{ fontSize: 13, color: c.muted }} />
       ) : (
         shown.map((h, i) => (
-          <FlexWidget key={String(i)} style={{ flexDirection: "row", alignItems: "center", flexGap: 8, width: "match_parent" }}>
+          <FlexWidget
+            key={String(i)}
+            style={{ flexDirection: "row", alignItems: "center", flexGap: 8, width: "match_parent" }}
+          >
             <FlexWidget
               style={{ height: 14, width: 14, borderRadius: 7, backgroundColor: h.done ? c.done : c.track }}
             />
