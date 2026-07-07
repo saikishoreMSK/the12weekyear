@@ -13,6 +13,7 @@ import type { AuthResponse, LoginInput, RegisterInput, RegistrationResult, User 
 // Importing from "@/lib/api" also configures the shared client (base URL + secure storage).
 import { authApi, registerUnauthorizedHandler } from "@/lib/api";
 import { tokenStorage } from "@/lib/token-storage";
+import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
 
 type Status = "loading" | "authenticated" | "unauthenticated";
 
@@ -42,25 +43,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(() => {
     void tokenStorage.clear();
+    void clearUser();
     setUser(null);
     setStatus("unauthenticated");
   }, []);
 
-  // Restore the session on launch: if a refresh token exists in secure storage, the API client
-  // transparently exchanges it for an access token while fetching the profile.
+  // Restore the session on launch WITHOUT blocking on the network: if we have a refresh token and a
+  // cached user, go straight to "authenticated" and validate /users/me in the background. This keeps
+  // the app instant + usable offline (the free-tier backend can take ~60s to wake). A 401 is handled
+  // by the unauthorized handler; a network failure just keeps the cached session.
   useEffect(() => {
     let active = true;
 
     (async () => {
-      const refreshToken = await tokenStorage.getRefreshToken();
+      const [refreshToken, cachedUser] = await Promise.all([tokenStorage.getRefreshToken(), loadUser()]);
       if (!refreshToken) {
         if (active) setStatus("unauthenticated");
         return;
       }
+      if (cachedUser) {
+        if (!active) return;
+        setUser(cachedUser);
+        setStatus("authenticated");
+        // Refresh the profile in the background; ignore failures (offline / cold backend).
+        authApi
+          .getMe()
+          .then((me) => {
+            if (!active) return;
+            setUser(me);
+            void saveUser(me);
+          })
+          .catch(() => {});
+        return;
+      }
+      // No cached user (e.g. first run after upgrade) — fall back to fetching before showing the app.
       try {
         const me = await authApi.getMe();
         if (!active) return;
         setUser(me);
+        void saveUser(me);
         setStatus("authenticated");
       } catch {
         if (active) clearSession();
@@ -80,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = useCallback(async (auth: AuthResponse) => {
     await tokenStorage.set(auth.accessToken, auth.refreshToken);
+    void saveUser(auth.user);
     setUser(auth.user);
     setStatus("authenticated");
   }, []);

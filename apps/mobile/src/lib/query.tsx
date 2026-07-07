@@ -40,7 +40,10 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            // Treat cached data as fresh for a day so opening the app doesn't hit the (sleeping)
+            // backend every time — it shows instantly from cache and only revalidates once/day,
+            // on reconnect, or when you tap "Sync now".
+            staleTime: 1000 * 60 * 60 * 24,
             gcTime: ONE_WEEK, // keep long enough to be persisted/restored
             refetchOnWindowFocus: false,
             retry: 1,
