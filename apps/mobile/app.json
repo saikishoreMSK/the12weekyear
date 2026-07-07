@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "The 12 Week Year",
-    "slug": "twelve-week-year",
+    "slug": "the12weekyear",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -94,6 +94,13 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1945d839-4adb-4899-a01f-1f121a701d71"
+      }
+    },
+    "owner": "sai163415s-team"
   }
 }
