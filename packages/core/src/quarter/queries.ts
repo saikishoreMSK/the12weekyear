@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { recomputeQuarterDerived } from "../calc";
+import { toIsoDate } from "../date";
 import { quarterApi } from "./api";
 import { writeGoal } from "./goal-writer";
 import type { Goal, GoalStatus, Quarter } from "./types";
@@ -36,22 +38,29 @@ function goalStatus(week: number, currentWeek: number | null, done: boolean): Go
 }
 
 /**
- * Weekly-goal mutations that update the cached quarter optimistically (instant tick), then persist
- * in the background via the debounced goal-writer. Shared by web + mobile.
+ * Weekly-goal mutations that update the cached quarter optimistically — the goal flips AND the
+ * quarter score (goalsProgress + sprintScore) is recomputed on-device for instant feedback — then
+ * persist in the background via the debounced goal-writer. Shared by web + mobile.
  */
 export function useGoalActions() {
   const qc = useQueryClient();
+  const today = toIsoDate(new Date());
 
-  // Patch whichever quarter caches hold this quarter (the "current" view and/or the detail view).
-  function patch(quarterId: string, map: (q: Quarter) => Quarter) {
-    qc.setQueryData<Quarter>(["quarter", "current"], (q) => (q ? map(q) : q));
-    qc.setQueryData<Quarter>(["quarter", quarterId], (q) => (q ? map(q) : q));
+  // Apply a transform to every cached quarter, then recompute its derived fields.
+  function patchQuarters(transform: (q: Quarter) => Quarter) {
+    qc.getQueryCache()
+      .findAll({ queryKey: ["quarter"] })
+      .forEach((q) =>
+        qc.setQueryData<Quarter>(q.queryKey, (old) =>
+          old ? recomputeQuarterDerived(transform(old), null, today) : old,
+        ),
+      );
   }
 
   return {
     toggle(quarterId: string, goal: Goal, currentWeek: number | null) {
       const done = !goal.done;
-      patch(quarterId, (q) => ({
+      patchQuarters((q) => ({
         ...q,
         goals: q.goals.map((g) =>
           g.id === goal.id ? { ...g, done, status: goalStatus(g.week, currentWeek, done) } : g,
@@ -61,7 +70,7 @@ export function useGoalActions() {
     },
 
     async remove(quarterId: string, goalId: string) {
-      patch(quarterId, (q) => ({ ...q, goals: q.goals.filter((g) => g.id !== goalId) }));
+      patchQuarters((q) => ({ ...q, goals: q.goals.filter((g) => g.id !== goalId) }));
       try {
         await quarterApi.removeGoal(quarterId, goalId);
       } catch {

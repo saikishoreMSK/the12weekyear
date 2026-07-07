@@ -126,6 +126,17 @@ export default function AppLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
+      {/* Opened by tapping a habit (active or archived). */}
+      <Tabs.Screen
+        name="habit-detail"
+        options={{
+          title: "Habit",
+          href: null,
+          headerRight: () => null,
+          headerLeft: () => <BackButton />,
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
     </LockGate>
   );

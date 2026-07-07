@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType } from "react";
 import { Alert, Pressable, Switch, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
-import { BarChart3, Bell, ChevronRight, Lock, RefreshCw, Share2, Sparkles } from "lucide-react-native";
+import { Bell, ChevronRight, Lock, RefreshCw, Share2, Sparkles } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { Screen } from "@/components/screen";
@@ -51,8 +51,7 @@ export default function ProfileScreen() {
 
       {/* Settings list */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <Row icon={BarChart3} label="Analytics" first onPress={() => router.push("/analytics")} />
-        <Row icon={Share2} label="Share progress" onPress={() => router.push("/share")} />
+        <Row icon={Share2} label="Share progress" first onPress={() => router.push("/share")} />
         <Row icon={RefreshCw} label="Sync" value={syncValue} />
         <Row icon={Bell} label="Notifications" onPress={() => router.push("/notifications")} />
         <Row icon={Sparkles} label="Go Premium" value="Coming soon" disabled />
