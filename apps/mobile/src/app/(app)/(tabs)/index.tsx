@@ -65,7 +65,9 @@ export default function DashboardScreen() {
                 <QuarterCard
                   key={q.quarterNumber}
                   tile={q}
-                  onOpen={() => router.push("/quarter")}
+                  onOpen={() =>
+                    q.quarterId && router.push({ pathname: "/quarter-detail", params: { id: q.quarterId } })
+                  }
                   onPlan={() => planQuarter(q.quarterNumber)}
                 />
               ))}

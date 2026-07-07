@@ -101,6 +101,7 @@ export default function ProfileScreen() {
             );
           })}
         </View>
+        <Text className="text-xs text-neutral-400">Dark is the default.</Text>
       </View>
 
       {/* Settings */}

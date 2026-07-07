@@ -11,7 +11,7 @@ export async function loadThemePref(): Promise<ThemePref> {
   } catch {
     // ignore
   }
-  return "system";
+  return "dark"; // Dark is the default when the user hasn't chosen.
 }
 
 export async function saveThemePref(pref: ThemePref): Promise<void> {

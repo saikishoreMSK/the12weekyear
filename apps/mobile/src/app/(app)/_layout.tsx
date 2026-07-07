@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-import { Pressable } from "react-native";
-import { Redirect, Tabs, useRouter } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
-import { BarChart3, Calendar, CalendarDays, ChevronLeft, CircleCheck, Home, User } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
@@ -11,38 +9,18 @@ import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
 import { LockGate } from "@/features/security/lock-gate";
 import { useColors } from "@/theme";
 
-/** Top-right button (on every tab) that opens the Profile screen. */
-function ProfileButton() {
-  const router = useRouter();
-  const c = useColors();
-  return (
-    <Pressable onPress={() => router.push("/profile")} className="px-4" hitSlop={8}>
-      <User color={c.text} size={22} />
-    </Pressable>
-  );
-}
-
-/** Back affordance for the pushed Profile screen. */
-function BackButton() {
-  const router = useRouter();
-  const c = useColors();
-  return (
-    <Pressable onPress={() => router.back()} className="px-4" hitSlop={8}>
-      <ChevronLeft color={c.text} size={24} />
-    </Pressable>
-  );
-}
-
-/** App routes require a session; signed-out users are sent to sign in. Bottom tab bar. */
+/**
+ * Authenticated area. The bottom tabs live in the (tabs) group; detail screens (Profile, Share,
+ * Habit, Reviews, a specific Quarter, …) are pushed on THIS Stack so they overlay the tabs and
+ * Back returns to the tab you came from — not the default tab.
+ */
 export default function AppLayout() {
   const { status } = useAuth();
   const c = useColors();
   const router = useRouter();
 
-  // Keep the Android home-screen widgets in sync with the latest data (no-op on web/iOS).
-  useSyncWidgets();
-  // App-icon shortcuts (long-press) → deep-link into the app (no-op on web).
-  useQuickActions();
+  useSyncWidgets(); // keep Android widgets in sync (no-op on web/iOS)
+  useQuickActions(); // app-icon shortcuts (no-op on web)
 
   // Tapping a reminder opens the relevant screen.
   useEffect(() => {
@@ -60,105 +38,24 @@ export default function AppLayout() {
 
   return (
     <LockGate>
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        headerStyle: { backgroundColor: c.card },
-        headerTitleStyle: { color: c.text },
-        headerTintColor: c.text,
-        headerShadowVisible: false,
-        headerRight: () => <ProfileButton />,
-        tabBarActiveTintColor: c.primary,
-        tabBarInactiveTintColor: c.muted,
-        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ title: "Dashboard", tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> }}
-      />
-      <Tabs.Screen
-        name="quarter"
-        options={{ title: "Quarter", tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} /> }}
-      />
-      <Tabs.Screen
-        name="week"
-        options={{ title: "Week", tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} /> }}
-      />
-      <Tabs.Screen
-        name="habits"
-        options={{ title: "Habits", tabBarIcon: ({ color, size }) => <CircleCheck color={color} size={size} /> }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{ title: "Analytics", tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} /> }}
-      />
-      {/* Opened from the top-right button; not a bottom tab. Hides the tab bar and shows a back arrow. */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: c.card },
+          headerTitleStyle: { color: c.text },
+          headerTintColor: c.text,
+          headerShadowVisible: false,
         }}
-      />
-      {/* Opened from Profile → Notifications. */}
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "Notifications",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      {/* Opened from Profile → Share progress. */}
-      <Tabs.Screen
-        name="share"
-        options={{
-          title: "Share progress",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      {/* Opened by tapping a habit (active or archived). */}
-      <Tabs.Screen
-        name="habit-detail"
-        options={{
-          title: "Habit",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      {/* Legal — opened from Profile. */}
-      <Tabs.Screen
-        name="privacy"
-        options={{
-          title: "Privacy Policy",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      <Tabs.Screen
-        name="terms"
-        options={{
-          title: "Terms of Service",
-          href: null,
-          headerRight: () => null,
-          headerLeft: () => <BackButton />,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-    </Tabs>
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ title: "Profile" }} />
+        <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
+        <Stack.Screen name="share" options={{ title: "Share progress" }} />
+        <Stack.Screen name="habit-detail" options={{ title: "Habit" }} />
+        <Stack.Screen name="quarter-detail" options={{ title: "Quarter" }} />
+        <Stack.Screen name="review" options={{ title: "Weekly review" }} />
+        <Stack.Screen name="privacy" options={{ title: "Privacy Policy" }} />
+        <Stack.Screen name="terms" options={{ title: "Terms of Service" }} />
+      </Stack>
     </LockGate>
   );
 }

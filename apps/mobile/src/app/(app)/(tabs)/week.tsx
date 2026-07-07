@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import {
   quarterApi,
@@ -23,6 +24,7 @@ export default function WeekScreen() {
   const { data: habits } = useHabits();
   const actions = useHabitActions();
   const goalActions = useGoalActions();
+  const router = useRouter();
   const c = useColors();
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
 
@@ -174,6 +176,18 @@ export default function WeekScreen() {
           </View>
         )}
       </View>
+
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: "/review",
+            params: { quarterId: quarter.id, week: String(selectedWeek), totalWeeks: String(quarter.totalWeeks) },
+          })
+        }
+        className="items-center rounded-lg border border-neutral-300 py-3 active:opacity-70 dark:border-neutral-700"
+      >
+        <Text className="font-medium text-neutral-700 dark:text-neutral-300">Write this week&apos;s review</Text>
+      </Pressable>
     </Screen>
   );
 }

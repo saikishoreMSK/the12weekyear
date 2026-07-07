@@ -23,6 +23,8 @@ export * from "./habit/completion-writer";
 export * from "./analytics/types";
 export * from "./analytics/api";
 export * from "./analytics/queries";
+export * from "./review/types";
+export * from "./review/api";
 export * from "./quote/quotes";
 export * from "./quote/quote-of-the-day";
 export * from "./date";
