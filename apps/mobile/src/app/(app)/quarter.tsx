@@ -143,12 +143,14 @@ function QuarterHabitRow({ habit, first }: { habit: QuarterHabit; first: boolean
     <View
       className={`flex-row items-center justify-between p-3 ${first ? "" : "border-t border-neutral-200 dark:border-neutral-800"}`}
     >
-      <View className="flex-1 flex-row items-center gap-2">
-        <Text
-          className={`w-5 text-center text-base font-bold ${habit.completedToday ? "text-emerald-500" : "text-red-500"}`}
+      <View className="flex-1 flex-row items-center gap-3">
+        <View
+          className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
+            habit.completedToday ? "border-emerald-500 bg-emerald-500" : "border-neutral-300 dark:border-neutral-600"
+          }`}
         >
-          {habit.completedToday ? "✓" : "✗"}
-        </Text>
+          {habit.completedToday ? <Text className="text-xs text-white">✓</Text> : null}
+        </View>
         <Text className="flex-1 text-neutral-900 dark:text-neutral-50" numberOfLines={1}>
           {habit.name}
         </Text>

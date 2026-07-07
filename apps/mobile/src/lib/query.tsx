@@ -8,6 +8,7 @@ import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persi
 
 import { HABITS_KEY, flushCompletions, flushGoals, onCompletionError, onGoalError } from "@twy/core";
 import { drainOutbox, loadOutbox } from "@/lib/outbox";
+import { loadLastSynced, markSynced } from "@/features/sync/status";
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -74,7 +75,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     const replay = () =>
       drainOutbox().then((changed) => {
         if (changed) client.invalidateQueries();
+        markSynced();
       });
+    void loadLastSynced();
     loadOutbox().then(() => {
       if (onlineManager.isOnline()) replay();
     });

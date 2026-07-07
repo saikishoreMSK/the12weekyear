@@ -137,6 +137,27 @@ export default function AppLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
+      {/* Legal — opened from Profile. */}
+      <Tabs.Screen
+        name="privacy"
+        options={{
+          title: "Privacy Policy",
+          href: null,
+          headerRight: () => null,
+          headerLeft: () => <BackButton />,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="terms"
+        options={{
+          title: "Terms of Service",
+          href: null,
+          headerRight: () => null,
+          headerLeft: () => <BackButton />,
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
     </LockGate>
   );

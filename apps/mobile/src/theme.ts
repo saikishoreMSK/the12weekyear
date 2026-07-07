@@ -1,4 +1,4 @@
-import { useColorScheme } from "react-native";
+import { useColorScheme } from "nativewind";
 
 /**
  * Minimal color palette + light/dark hook. StyleSheet-based for M1; NativeWind + a fuller design
@@ -44,5 +44,6 @@ export const dark: Palette = {
 };
 
 export function useColors(): Palette {
-  return useColorScheme() === "dark" ? dark : light;
+  const { colorScheme } = useColorScheme();
+  return colorScheme === "dark" ? dark : light;
 }
