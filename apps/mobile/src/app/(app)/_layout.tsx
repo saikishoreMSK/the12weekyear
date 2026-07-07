@@ -6,7 +6,6 @@ import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
 import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
 import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
-import { LockGate } from "@/features/security/lock-gate";
 import { useColors } from "@/theme";
 
 /**
@@ -37,25 +36,23 @@ export default function AppLayout() {
   if (status !== "authenticated") return <Redirect href="/login" />;
 
   return (
-    <LockGate>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: c.card },
-          headerTitleStyle: { color: c.text },
-          headerTintColor: c.text,
-          headerShadowVisible: false,
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="profile" options={{ title: "Profile" }} />
-        <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
-        <Stack.Screen name="share" options={{ title: "Share progress" }} />
-        <Stack.Screen name="habit-detail" options={{ title: "Habit" }} />
-        <Stack.Screen name="quarter-detail" options={{ title: "Quarter" }} />
-        <Stack.Screen name="review" options={{ title: "Weekly review" }} />
-        <Stack.Screen name="privacy" options={{ title: "Privacy Policy" }} />
-        <Stack.Screen name="terms" options={{ title: "Terms of Service" }} />
-      </Stack>
-    </LockGate>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: c.card },
+        headerTitleStyle: { color: c.text },
+        headerTintColor: c.text,
+        headerShadowVisible: false,
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ title: "Profile" }} />
+      <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
+      <Stack.Screen name="share" options={{ title: "Share progress" }} />
+      <Stack.Screen name="habit-detail" options={{ title: "Habit" }} />
+      <Stack.Screen name="quarter-detail" options={{ title: "Quarter" }} />
+      <Stack.Screen name="review" options={{ title: "Weekly review" }} />
+      <Stack.Screen name="privacy" options={{ title: "Privacy Policy" }} />
+      <Stack.Screen name="terms" options={{ title: "Terms of Service" }} />
+    </Stack>
   );
 }

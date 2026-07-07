@@ -1,17 +1,16 @@
 import { useEffect, useState, type ComponentType } from "react";
-import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, ChevronRight, FileText, Lock, RefreshCw, Share2, ShieldCheck, Sparkles } from "lucide-react-native";
+import { Bell, ChevronRight, FileText, RefreshCw, Share2, ShieldCheck, Sparkles } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { Screen } from "@/components/screen";
 import { useIsOnline } from "@/lib/query";
 import { drainOutbox, usePendingCount } from "@/lib/outbox";
 import { markSynced, relativeTime, useLastSynced } from "@/features/sync/status";
-import { isBiometricAvailable, loadLockPref, saveLockPref } from "@/features/security/lock";
 import { loadThemePref, saveThemePref, type ThemePref } from "@/features/appearance/appearance";
 import { useColors } from "@/theme";
 
@@ -21,7 +20,6 @@ const THEME_OPTIONS: ThemePref[] = ["system", "light", "dark"];
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const c = useColors();
   const qc = useQueryClient();
   const { setColorScheme } = useColorScheme();
   const version = Constants.expoConfig?.version ?? "1.0.0";
@@ -31,10 +29,8 @@ export default function ProfileScreen() {
   const lastSynced = useLastSynced();
   const [syncing, setSyncing] = useState(false);
 
-  const [appLock, setAppLock] = useState(false);
   const [theme, setTheme] = useState<ThemePref>("system");
   useEffect(() => {
-    loadLockPref().then(setAppLock);
     loadThemePref().then(setTheme);
   }, []);
 
@@ -56,15 +52,6 @@ export default function ProfileScreen() {
     } finally {
       setSyncing(false);
     }
-  }
-
-  async function toggleLock(value: boolean) {
-    if (value && !(await isBiometricAvailable())) {
-      Alert.alert("Not available", "Set up a fingerprint or face unlock on your device first.");
-      return;
-    }
-    setAppLock(value);
-    await saveLockPref(value);
   }
 
   async function pickTheme(pref: ThemePref) {
@@ -116,20 +103,6 @@ export default function ProfileScreen() {
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Row icon={ShieldCheck} label="Privacy Policy" first onPress={() => router.push("/privacy")} />
         <Row icon={FileText} label="Terms of Service" onPress={() => router.push("/terms")} />
-      </View>
-
-      {/* Security */}
-      <View className="rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <View className="flex-row items-center gap-3 p-4">
-          <Lock color={c.muted} size={18} />
-          <View className="flex-1">
-            <Text className="text-neutral-900 dark:text-neutral-50">App lock</Text>
-            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-              Require fingerprint / face to open the app
-            </Text>
-          </View>
-          <Switch value={appLock} onValueChange={toggleLock} trackColor={{ true: c.primary, false: c.border }} />
-        </View>
       </View>
 
       <Pressable onPress={() => logout()} className="items-center rounded-lg bg-blue-600 py-3.5 active:opacity-80">
