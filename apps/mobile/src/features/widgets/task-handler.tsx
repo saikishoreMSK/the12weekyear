@@ -1,3 +1,6 @@
+// react-native-android-widget renders raw functions; opt this file out of the React Compiler.
+"use no memo";
+
 import { Appearance } from "react-native";
 import { FlexWidget, TextWidget, type WidgetTaskHandlerProps } from "react-native-android-widget";
 

@@ -1,3 +1,6 @@
+// react-native-android-widget renders raw functions; opt this file out of the React Compiler.
+"use no memo";
+
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
 import type { Quote } from "@twy/core";

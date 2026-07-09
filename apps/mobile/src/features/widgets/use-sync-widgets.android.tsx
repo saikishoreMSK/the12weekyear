@@ -1,3 +1,6 @@
+// The widget JSX rendered here must stay raw functions for react-native-android-widget.
+"use no memo";
+
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { requestWidgetUpdate } from "react-native-android-widget";
