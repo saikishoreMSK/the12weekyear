@@ -69,6 +69,11 @@ export function pendingCount(): number {
   return ops.size;
 }
 
+/** True while an offline display-name edit is queued — used to avoid a background getMe clobbering it. */
+export function hasPendingProfile(): boolean {
+  return [...ops.values()].some((o) => o.kind === "profile");
+}
+
 export function subscribeOutbox(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

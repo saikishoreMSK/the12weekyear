@@ -1,4 +1,5 @@
 import { ApiException } from "./api/client";
+import { authApi } from "./auth/api";
 import { habitApi } from "./habit/api";
 import { quarterApi } from "./quarter/api";
 
@@ -10,11 +11,14 @@ import { quarterApi } from "./quarter/api";
  */
 export type WriteOp =
   | { kind: "completion"; habitId: string; date: string; done: boolean }
-  | { kind: "goal"; quarterId: string; goalId: string; done: boolean };
+  | { kind: "goal"; quarterId: string; goalId: string; done: boolean }
+  | { kind: "profile"; displayName: string };
 
 /** Stable key so re-queuing the same target coalesces to the latest desired state. */
 export function opKey(op: WriteOp): string {
-  return op.kind === "completion" ? `c:${op.habitId}:${op.date}` : `g:${op.goalId}`;
+  if (op.kind === "completion") return `c:${op.habitId}:${op.date}`;
+  if (op.kind === "goal") return `g:${op.goalId}`;
+  return "p:profile";
 }
 
 let queueHandler: ((op: WriteOp) => void) | null = null;
@@ -43,5 +47,8 @@ export function sendOp(op: WriteOp): Promise<unknown> {
   if (op.kind === "completion") {
     return op.done ? habitApi.markDate(op.habitId, op.date) : habitApi.unmarkDate(op.habitId, op.date);
   }
-  return quarterApi.updateGoal(op.quarterId, op.goalId, { done: op.done });
+  if (op.kind === "goal") {
+    return quarterApi.updateGoal(op.quarterId, op.goalId, { done: op.done });
+  }
+  return authApi.updateMe({ displayName: op.displayName });
 }

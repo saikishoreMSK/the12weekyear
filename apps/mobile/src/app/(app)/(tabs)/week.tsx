@@ -62,19 +62,37 @@ export default function WeekScreen() {
   const goal = quarter.goals.find((g) => g.week === selectedWeek);
   const days = weekDates(quarter.startDate, quarter.endDate, selectedWeek);
 
+  // Week score = habit completions ÷ slots, over the days elapsed so far this week (Sun→today).
+  // A fair consistency % that grows through the week; matches how the app scores habit consistency.
+  const elapsed = days.map(toIsoDate).filter((iso) => iso <= TODAY);
+  const slots = activeHabits.length * elapsed.length;
+  const doneSlots = elapsed.reduce(
+    (sum, iso) => sum + activeHabits.filter((h) => h.completionDates.includes(iso)).length,
+    0,
+  );
+  const weekScore = slots > 0 ? Math.round((doneSlots / slots) * 100) : null;
+
   return (
     <Screen>
-      <View>
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-          Week {selectedWeek}
-          {quarter.currentWeek === selectedWeek ? (
-            <Text className="text-sm font-normal text-neutral-500 dark:text-neutral-400"> · this week</Text>
-          ) : null}
-        </Text>
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-          {weekRangeLabel(quarter.startDate, quarter.endDate, selectedWeek)} · Q{quarter.quarterNumber}{" "}
-          {quarter.year}
-        </Text>
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="flex-1">
+          <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
+            Week {selectedWeek}
+            {quarter.currentWeek === selectedWeek ? (
+              <Text className="text-sm font-normal text-neutral-500 dark:text-neutral-400"> · this week</Text>
+            ) : null}
+          </Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+            {weekRangeLabel(quarter.startDate, quarter.endDate, selectedWeek)} · Q{quarter.quarterNumber}{" "}
+            {quarter.year}
+          </Text>
+        </View>
+        {weekScore !== null ? (
+          <View className="items-center rounded-xl border border-emerald-500 px-3 py-1.5">
+            <Text className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{weekScore}%</Text>
+            <Text className="text-[10px] text-neutral-500 dark:text-neutral-400">week score</Text>
+          </View>
+        ) : null}
       </View>
 
       {/* Week selector */}
@@ -126,7 +144,14 @@ export default function WeekScreen() {
 
       {/* Habit completion grid */}
       <View className="gap-2">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Habit completion</Text>
+        <View className="flex-row items-baseline justify-between">
+          <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Habit completion</Text>
+          {weekScore !== null ? (
+            <Text className="text-xs text-neutral-400">
+              {doneSlots} of {slots} so far
+            </Text>
+          ) : null}
+        </View>
         {activeHabits.length === 0 ? (
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">No habits yet.</Text>
         ) : (

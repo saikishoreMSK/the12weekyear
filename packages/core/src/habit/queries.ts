@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { syncDashboardFromQuarters } from "../cache";
 import { toIsoDate } from "../date";
 import { recomputeHabit, recomputeQuarterDerived } from "../calc";
 import type { Quarter } from "../quarter/types";
@@ -49,6 +50,7 @@ export function useHabitActions() {
             old ? recomputeQuarterDerived(old, byId, today) : old,
           ),
         );
+      syncDashboardFromQuarters(qc);
 
       writeCompletion(habit.id, dateIso, done);
     },

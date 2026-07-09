@@ -1,10 +1,10 @@
 import { useEffect, useState, type ComponentType } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, ChevronRight, FileText, RefreshCw, Share2, ShieldCheck, Sparkles } from "lucide-react-native";
+import { Bell, Check, ChevronRight, FileText, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { Screen } from "@/components/screen";
@@ -18,11 +18,25 @@ type IconType = ComponentType<{ color?: string; size?: number }>;
 const THEME_OPTIONS: ThemePref[] = ["system", "light", "dark"];
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateDisplayName } = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
   const { setColorScheme } = useColorScheme();
+  const c = useColors();
   const version = Constants.expoConfig?.version ?? "1.0.0";
+
+  const [editingName, setEditingName] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  function startEditName() {
+    setDraft(user?.displayName ?? "");
+    setEditingName(true);
+  }
+  async function saveName() {
+    const name = draft.trim();
+    setEditingName(false);
+    if (name) await updateDisplayName(name);
+  }
 
   const online = useIsOnline();
   const pending = usePendingCount();
@@ -64,7 +78,34 @@ export default function ProfileScreen() {
     <Screen>
       {/* Account */}
       <View className="gap-1 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{user?.displayName}</Text>
+        {editingName ? (
+          <View className="flex-row items-center gap-2">
+            <TextInput
+              value={draft}
+              onChangeText={setDraft}
+              autoFocus
+              maxLength={60}
+              placeholder="Your name"
+              placeholderTextColor={c.muted}
+              returnKeyType="done"
+              onSubmitEditing={saveName}
+              className="flex-1 border-b border-neutral-300 pb-1 text-lg font-semibold text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
+            />
+            <Pressable onPress={saveName} hitSlop={10} className="p-1 active:opacity-60">
+              <Check color="#16a34a" size={20} />
+            </Pressable>
+            <Pressable onPress={() => setEditingName(false)} hitSlop={10} className="p-1 active:opacity-60">
+              <X color={c.muted} size={20} />
+            </Pressable>
+          </View>
+        ) : (
+          <View className="flex-row items-center gap-2">
+            <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{user?.displayName}</Text>
+            <Pressable onPress={startEditName} hitSlop={10} className="p-1 active:opacity-60">
+              <Pencil color={c.muted} size={15} />
+            </Pressable>
+          </View>
+        )}
         <Text className="text-sm text-neutral-500 dark:text-neutral-400">{user?.email}</Text>
         {user?.timezone ? <Text className="mt-1 text-xs text-neutral-400">Timezone: {user.timezone}</Text> : null}
       </View>

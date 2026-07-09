@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { syncDashboardFromQuarters } from "../cache";
 import { recomputeQuarterDerived } from "../calc";
 import { toIsoDate } from "../date";
 import { quarterApi } from "./api";
@@ -55,6 +56,7 @@ export function useGoalActions() {
           old ? recomputeQuarterDerived(transform(old), null, today) : old,
         ),
       );
+    syncDashboardFromQuarters(qc);
   }
 
   return {

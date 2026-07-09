@@ -35,4 +35,7 @@ export const authApi = {
     apiClient.post<void>("/api/v1/auth/logout", { refreshToken }, { skipAuth: true }),
 
   getMe: () => apiClient.get<User>("/api/v1/users/me"),
+
+  updateMe: (input: { displayName?: string; timezone?: string }) =>
+    apiClient.patch<User>("/api/v1/users/me", input),
 };

@@ -29,3 +29,4 @@ export * from "./quote/quotes";
 export * from "./quote/quote-of-the-day";
 export * from "./date";
 export * from "./sync";
+export * from "./cache";

@@ -8,12 +8,21 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AuthResponse, LoginInput, RegisterInput, RegistrationResult, User } from "@twy/core";
+import {
+  isNetworkError,
+  queueWrite,
+  type AuthResponse,
+  type LoginInput,
+  type RegisterInput,
+  type RegistrationResult,
+  type User,
+} from "@twy/core";
 
 // Importing from "@/lib/api" also configures the shared client (base URL + secure storage).
 import { authApi, registerUnauthorizedHandler } from "@/lib/api";
 import { tokenStorage } from "@/lib/token-storage";
 import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
+import { hasPendingProfile } from "@/lib/outbox";
 
 type Status = "loading" | "authenticated" | "unauthenticated";
 
@@ -23,6 +32,7 @@ interface AuthContextValue {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<RegistrationResult>;
   verifyEmail: (email: string, code: string) => Promise<void>;
+  updateDisplayName: (name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -70,8 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .getMe()
           .then((me) => {
             if (!active) return;
-            setUser(me);
-            void saveUser(me);
+            // Don't let the server's (stale) name overwrite a display-name edit still queued offline.
+            const next = hasPendingProfile() ? { ...me, displayName: cachedUser.displayName } : me;
+            setUser(next);
+            void saveUser(next);
           })
           .catch(() => {});
         return;
@@ -128,6 +140,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applySession],
   );
 
+  // Edit the display name instantly + offline: update the cached user right away (in memory + on
+  // disk so it shows immediately and survives a restart), then PATCH /users/me in the background —
+  // queued in the offline outbox and replayed on reconnect if the device is offline.
+  const updateDisplayName = useCallback(
+    async (raw: string) => {
+      const name = raw.trim();
+      if (!name || !user || user.displayName === name) return;
+      const optimistic = { ...user, displayName: name };
+      setUser(optimistic);
+      void saveUser(optimistic);
+      try {
+        const server = await authApi.updateMe({ displayName: name });
+        setUser(server);
+        void saveUser(server);
+      } catch (e) {
+        if (isNetworkError(e)) queueWrite({ kind: "profile", displayName: name });
+        // else: keep the optimistic value; it reconciles on the next getMe
+      }
+    },
+    [user],
+  );
+
   const logout = useCallback(async () => {
     const refreshToken = await tokenStorage.getRefreshToken();
     try {
@@ -138,8 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const value = useMemo(
-    () => ({ user, status, login, register, verifyEmail, logout }),
-    [user, status, login, register, verifyEmail, logout],
+    () => ({ user, status, login, register, verifyEmail, updateDisplayName, logout }),
+    [user, status, login, register, verifyEmail, updateDisplayName, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

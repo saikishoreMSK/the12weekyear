@@ -34,10 +34,23 @@ export default function HabitsScreen() {
   const active = habits?.filter((h) => h.active) ?? [];
   const archived = habits?.filter((h) => !h.active) ?? [];
 
-  const activeDays = useMemo(() => {
-    const set = new Set<string>();
-    active.forEach((h) => h.completionDates.forEach((d) => set.add(d)));
-    return set;
+  // Fraction (0–1) of active habits completed on a given day — drives the day box's green fill.
+  const dayFraction = (iso: string) =>
+    active.length ? active.filter((h) => h.completionDates.includes(iso)).length / active.length : 0;
+
+  // "Perfect-day" streak: consecutive days where ALL active habits were completed. Anything under
+  // 100% breaks it. Today not-yet-complete doesn't break it (we start counting from yesterday).
+  const perfectStreak = useMemo(() => {
+    if (active.length === 0) return 0;
+    const isPerfect = (iso: string) => active.every((h) => h.completionDates.includes(iso));
+    const cursor = parseIsoDate(TODAY);
+    if (!isPerfect(TODAY)) cursor.setDate(cursor.getDate() - 1);
+    let streak = 0;
+    while (isPerfect(toIsoDate(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
   }, [active]);
 
   const weekDays = useMemo(() => {
@@ -79,22 +92,30 @@ export default function HabitsScreen() {
                 const iso = toIsoDate(d);
                 const isSel = iso === selected;
                 const future = iso > TODAY;
+                const frac = dayFraction(iso);
+                const full = frac >= 1 && active.length > 0;
                 return (
                   <Pressable
                     key={iso}
                     disabled={future}
                     onPress={() => setSelected(iso)}
-                    className={`items-center rounded-lg px-1.5 py-1.5 ${isSel ? "bg-blue-600" : ""} ${future ? "opacity-30" : ""}`}
+                    className={`relative h-14 w-9 items-center justify-center overflow-hidden rounded-lg ${
+                      isSel ? "border-2 border-blue-600" : ""
+                    } ${future ? "opacity-30" : ""}`}
                   >
-                    <Text className={`text-[10px] ${isSel ? "text-blue-100" : "text-neutral-500 dark:text-neutral-400"}`}>
+                    {/* Green fill rises with the share of habits completed that day; full day = brighter. */}
+                    {frac > 0 ? (
+                      <View
+                        style={{ height: `${Math.round(frac * 100)}%` }}
+                        className={`absolute inset-x-0 bottom-0 ${full ? "bg-emerald-500" : "bg-emerald-400/50"}`}
+                      />
+                    ) : null}
+                    <Text className={`text-[10px] ${isSel ? "text-blue-600 dark:text-blue-400" : "text-neutral-500 dark:text-neutral-400"}`}>
                       {DOW[d.getDay()]}
                     </Text>
-                    <Text className={`text-sm font-semibold ${isSel ? "text-white" : "text-neutral-900 dark:text-neutral-50"}`}>
+                    <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
                       {d.getDate()}
                     </Text>
-                    <View
-                      className={`mt-1 h-1.5 w-1.5 rounded-full ${activeDays.has(iso) ? (isSel ? "bg-blue-100" : "bg-emerald-500") : "bg-transparent"}`}
-                    />
                   </Pressable>
                 );
               })}
@@ -109,7 +130,16 @@ export default function HabitsScreen() {
             </Pressable>
           </View>
 
-          <Text className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{dayLabel(selected)}</Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{dayLabel(selected)}</Text>
+            {perfectStreak > 0 ? (
+              <View className="rounded-full bg-emerald-500/15 px-2 py-0.5">
+                <Text className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  🔥 {perfectStreak}-day streak
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
           {active.length === 0 ? (
             <View className="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
