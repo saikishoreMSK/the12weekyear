@@ -5,21 +5,20 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   type TextInputProps,
   View,
 } from "react-native";
+import { useColorScheme } from "nativewind";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// The auth flow uses a fixed blue brand look (independent of the app's light/dark theme):
-// a blue screen with a centered white card.
-const BLUE = "#2563eb";
-const DANGER = "#dc2626";
-const SUCCESS = "#16a34a";
+import { useColors } from "@/theme";
 
-/** Primary action button (blue on the white card) with a loading spinner + disabled state. */
+// The auth flow follows the app's light/dark theme (white ⇄ near-black), not a fixed brand color.
+// The primary button is high-contrast: black-on-white in light mode, white-on-black in dark mode.
+
+/** Primary action button (high-contrast) with a loading spinner + disabled state. */
 export function Button({
   title,
   onPress,
@@ -31,14 +30,21 @@ export function Button({
   loading?: boolean;
   disabled?: boolean;
 }) {
+  const { colorScheme } = useColorScheme();
   const off = disabled || loading;
+  const spinner = colorScheme === "dark" ? "#0b0b0c" : "#ffffff";
   return (
     <Pressable
       onPress={onPress}
       disabled={off}
-      style={({ pressed }) => [styles.btn, { opacity: off ? 0.55 : pressed ? 0.9 : 1 }]}
+      style={{ opacity: off ? 0.5 : 1 }}
+      className="mt-1 items-center justify-center rounded-xl bg-neutral-900 py-4 active:opacity-90 dark:bg-white"
     >
-      {loading ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.btnText}>{title}</Text>}
+      {loading ? (
+        <ActivityIndicator color={spinner} />
+      ) : (
+        <Text className="text-[17px] font-bold text-white dark:text-neutral-900">{title}</Text>
+      )}
     </Pressable>
   );
 }
@@ -48,26 +54,30 @@ interface TextFieldProps extends TextInputProps {
   error?: string;
 }
 
-/** Labeled text input on the white card. */
+/** Labeled text input on the card. */
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
   { label, error, style, ...rest },
   ref,
 ) {
+  const c = useColors();
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+    <View className="gap-1.5">
+      <Text className="text-[13px] font-semibold text-neutral-700 dark:text-neutral-300">{label}</Text>
       <TextInput
         ref={ref}
-        placeholderTextColor="#9ca3af"
-        style={[styles.input, error ? { borderColor: DANGER } : null, style]}
+        placeholderTextColor={c.muted}
+        className={`rounded-lg border px-3 py-3 text-base text-neutral-900 dark:text-neutral-50 ${
+          error ? "border-red-500" : "border-neutral-300 dark:border-neutral-700"
+        }`}
+        style={style}
         {...rest}
       />
-      {error ? <Text style={styles.errText}>{error}</Text> : null}
+      {error ? <Text className="text-xs text-red-500">{error}</Text> : null}
     </View>
   );
 });
 
-/** Auth scaffold: blue screen, centered brand + title, and a white card holding the form. */
+/** Auth scaffold: themed screen, centered brand + title, and a card holding the form. */
 export function AuthScreen({
   title,
   description,
@@ -78,15 +88,28 @@ export function AuthScreen({
   children: ReactNode;
 }) {
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <Text style={styles.brand}>THE 12 WEEK YEAR</Text>
-            <Text style={styles.title}>{title}</Text>
-            {description ? <Text style={styles.desc}>{description}</Text> : null}
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, gap: 18 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="mb-2 items-center gap-1.5">
+            <Text className="text-xs font-bold tracking-[2px] text-neutral-400 dark:text-neutral-500">
+              THE 12 WEEK YEAR
+            </Text>
+            <Text className="text-center text-[28px] font-extrabold text-neutral-900 dark:text-neutral-50">
+              {title}
+            </Text>
+            {description ? (
+              <Text className="text-center text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+                {description}
+              </Text>
+            ) : null}
           </View>
-          <View style={styles.card}>{children}</View>
+          <View className="gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            {children}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -95,15 +118,15 @@ export function AuthScreen({
 
 export function ErrorText({ children }: { children?: ReactNode }) {
   if (!children) return null;
-  return <Text style={[styles.msg, { color: DANGER }]}>{children}</Text>;
+  return <Text className="text-center text-sm text-red-500">{children}</Text>;
 }
 
 export function InfoText({ children }: { children?: ReactNode }) {
   if (!children) return null;
-  return <Text style={[styles.msg, { color: SUCCESS }]}>{children}</Text>;
+  return <Text className="text-center text-sm text-emerald-600 dark:text-emerald-400">{children}</Text>;
 }
 
-/** Inline tappable text link (blue, centered). */
+/** Inline tappable text link (foreground color, underlined so it reads as tappable). */
 export function LinkText({
   children,
   onPress,
@@ -114,36 +137,13 @@ export function LinkText({
   disabled?: boolean;
 }) {
   return (
-    <Text onPress={disabled ? undefined : onPress} style={[styles.link, disabled && { color: "#9ca3af" }]}>
+    <Text
+      onPress={disabled ? undefined : onPress}
+      className={`text-center text-sm font-semibold underline ${
+        disabled ? "text-neutral-400 dark:text-neutral-600" : "text-neutral-900 dark:text-neutral-50"
+      }`}
+    >
       {children}
     </Text>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BLUE },
-  flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: 24, gap: 18 },
-  header: { gap: 6, marginBottom: 8, alignItems: "center" },
-  brand: { fontSize: 12, fontWeight: "700", letterSpacing: 2, color: "rgba(255,255,255,0.85)" },
-  title: { fontSize: 28, fontWeight: "800", color: "#ffffff", textAlign: "center" },
-  desc: { fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.9)", textAlign: "center" },
-  card: { backgroundColor: "#ffffff", borderRadius: 20, padding: 20, gap: 16 },
-  field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: "600", color: "#0b0b0c" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 13,
-    fontSize: 16,
-    color: "#0b0b0c",
-    backgroundColor: "#ffffff",
-  },
-  errText: { fontSize: 12, color: DANGER },
-  btn: { borderRadius: 12, paddingVertical: 16, alignItems: "center", justifyContent: "center", backgroundColor: BLUE, marginTop: 4 },
-  btnText: { fontSize: 17, fontWeight: "700", color: "#ffffff" },
-  msg: { fontSize: 14, textAlign: "center" },
-  link: { fontSize: 14, fontWeight: "600", color: BLUE, textAlign: "center" },
-});

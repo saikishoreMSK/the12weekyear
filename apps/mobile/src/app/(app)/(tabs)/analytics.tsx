@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
-import { parseIsoDate, toIsoDate, useAnalytics, type Analytics, type HeatmapDay } from "@twy/core";
+import { parseIsoDate, toIsoDate, useAnalytics, useHabits, type HeatmapDay } from "@twy/core";
 import { Screen } from "@/components/screen";
 import { useColors } from "@/theme";
 
 const WEEKDAY_ORDER = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+const JS_DAY_KEY = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function titleCase(day: string | null): string {
@@ -15,7 +16,46 @@ function titleCase(day: string | null): string {
 
 export default function AnalyticsScreen() {
   const { data, isError } = useAnalytics();
+  const { data: habits } = useHabits();
   const c = useColors();
+
+  // Weekday breakdown, derived on-device from cached completions over the backend's window — instant
+  // and realtime (updates as you toggle habits) instead of waiting on the analytics refetch.
+  const weekdayCounts = useMemo(() => {
+    const counts = new Map<string, number>(WEEKDAY_ORDER.map((d) => [d, 0]));
+    if (!data || !habits) return counts;
+    for (const h of habits) {
+      for (const iso of h.completionDates) {
+        if (iso < data.windowStart || iso > data.windowEnd) continue;
+        const key = JS_DAY_KEY[parseIsoDate(iso).getDay()];
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [habits, data]);
+
+  // Best/worst day recomputed from the same counts so the stats agree with the bars.
+  const { best, worst } = useMemo(() => {
+    let bDay: string | null = null;
+    let wDay: string | null = null;
+    let bMax = -1;
+    let wMin = Infinity;
+    let any = false;
+    for (const day of WEEKDAY_ORDER) {
+      const count = weekdayCounts.get(day) ?? 0;
+      if (count > 0) any = true;
+      if (count > bMax) {
+        bMax = count;
+        bDay = day;
+      }
+      if (count < wMin) {
+        wMin = count;
+        wDay = day;
+      }
+    }
+    if (!any) return { best: data?.bestDayOfWeek ?? null, worst: data?.worstDayOfWeek ?? null };
+    return { best: bDay, worst: wDay };
+  }, [weekdayCounts, data]);
 
   return (
     <Screen>
@@ -31,8 +71,8 @@ export default function AnalyticsScreen() {
           <View className="flex-row flex-wrap gap-3">
             <Stat label="Current streak" value={`${data.currentStreak}`} suffix="days" />
             <Stat label="Longest streak" value={`${data.longestStreak}`} suffix="days" />
-            <Stat label="Best day" value={titleCase(data.bestDayOfWeek)} />
-            <Stat label="Worst day" value={titleCase(data.worstDayOfWeek)} />
+            <Stat label="Best day" value={titleCase(best)} />
+            <Stat label="Worst day" value={titleCase(worst)} />
           </View>
 
           <Card title="Activity">
@@ -40,7 +80,7 @@ export default function AnalyticsScreen() {
           </Card>
 
           <Card title="By day of week">
-            <WeekdayBars data={data} />
+            <WeekdayBars counts={weekdayCounts} />
           </Card>
 
           <Text className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -151,13 +191,12 @@ function Heatmap({
 }
 
 /** Vertical bar chart of completions per weekday. */
-function WeekdayBars({ data }: { data: Analytics }) {
-  const byDay = new Map(data.weekdayCounts.map((w) => [w.dayOfWeek, w.count]));
-  const max = Math.max(1, ...data.weekdayCounts.map((w) => w.count));
+function WeekdayBars({ counts }: { counts: Map<string, number> }) {
+  const max = Math.max(1, ...WEEKDAY_ORDER.map((d) => counts.get(d) ?? 0));
   return (
     <View className="flex-row items-end justify-between" style={{ gap: 8 }}>
       {WEEKDAY_ORDER.map((day) => {
-        const count = byDay.get(day) ?? 0;
+        const count = counts.get(day) ?? 0;
         return (
           <View key={day} className="flex-1 items-center" style={{ gap: 4 }}>
             <Text className="text-[10px] text-neutral-500 dark:text-neutral-400">{count}</Text>

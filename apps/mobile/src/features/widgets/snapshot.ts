@@ -28,9 +28,12 @@ export async function saveWidgetSnapshot(snapshot: WidgetSnapshot): Promise<void
 }
 
 export async function loadWidgetSnapshot(): Promise<WidgetSnapshot | null> {
+  // Let a storage read failure propagate (the widget task handler surfaces it) so a headless
+  // AsyncStorage problem isn't silently mistaken for "no data". Only a corrupt value is swallowed.
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as WidgetSnapshot) : null;
+    return JSON.parse(raw) as WidgetSnapshot;
   } catch {
     return null;
   }
