@@ -1,5 +1,7 @@
 // Configure the shared API client (base URL + secure token storage) once, before anything renders.
 import "@/lib/api";
+// Register the guest (local-first) backend so no-account use works offline.
+import "@/lib/local-backend";
 // NativeWind global stylesheet.
 import "@/global.css";
 

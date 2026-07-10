@@ -11,6 +11,7 @@ import {
 import {
   isNetworkError,
   queueWrite,
+  setGuestMode,
   type AuthResponse,
   type LoginInput,
   type RegisterInput,
@@ -24,7 +25,8 @@ import { tokenStorage } from "@/lib/token-storage";
 import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
 import { hasPendingProfile } from "@/lib/outbox";
 
-type Status = "loading" | "authenticated" | "unauthenticated";
+// "guest" = using the app locally with no account (local-first). "authenticated" = signed in (cloud).
+type Status = "loading" | "authenticated" | "guest";
 
 interface AuthContextValue {
   user: User | null;
@@ -55,7 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void tokenStorage.clear();
     void clearUser();
     setUser(null);
-    setStatus("unauthenticated");
+    setGuestMode(true); // fall back to local-first guest mode (keeps local data)
+    setStatus("guest");
   }, []);
 
   // Restore the session on launch WITHOUT blocking on the network: if we have a refresh token and a
@@ -68,11 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       const [refreshToken, cachedUser] = await Promise.all([tokenStorage.getRefreshToken(), loadUser()]);
       if (!refreshToken) {
-        if (active) setStatus("unauthenticated");
+        if (active) {
+          setGuestMode(true);
+          setStatus("guest");
+        }
         return;
       }
       if (cachedUser) {
         if (!active) return;
+        setGuestMode(false);
         setUser(cachedUser);
         setStatus("authenticated");
         // Refresh the profile in the background; ignore failures (offline / cold backend).
@@ -92,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const me = await authApi.getMe();
         if (!active) return;
+        setGuestMode(false);
         setUser(me);
         void saveUser(me);
         setStatus("authenticated");
@@ -114,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = useCallback(async (auth: AuthResponse) => {
     await tokenStorage.set(auth.accessToken, auth.refreshToken);
     void saveUser(auth.user);
+    setGuestMode(false);
     setUser(auth.user);
     setStatus("authenticated");
   }, []);

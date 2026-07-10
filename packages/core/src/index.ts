@@ -32,3 +32,5 @@ export * from "./quote/quote-of-the-day";
 export * from "./date";
 export * from "./sync";
 export * from "./cache";
+export * from "./calc";
+export * from "./local-backend";

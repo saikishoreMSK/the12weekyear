@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Redirect, Stack, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 
 import { useAuth } from "@/features/auth/auth-context";
@@ -34,8 +34,8 @@ export default function AppLayout() {
     return () => sub.remove();
   }, [router]);
 
+  // Guests use the app fully (local-first); only wait while the session is still resolving.
   if (status === "loading") return <LoadingScreen />;
-  if (status !== "authenticated") return <Redirect href="/login" />;
 
   return (
     <Stack

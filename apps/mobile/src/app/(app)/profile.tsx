@@ -76,7 +76,23 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      {/* Account */}
+      {/* Account — guest vs signed-in */}
+      {!user ? (
+        <View className="gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+          <View>
+            <Text className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Guest</Text>
+            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+              Your data is saved on this device. Sign up to back it up and sync across devices.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push("/login")}
+            className="items-center rounded-lg bg-blue-600 py-3 active:opacity-80"
+          >
+            <Text className="font-semibold text-white">Sign up / Log in</Text>
+          </Pressable>
+        </View>
+      ) : (
       <View className="gap-1 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
         {editingName ? (
           <View className="flex-row items-center gap-2">
@@ -109,6 +125,7 @@ export default function ProfileScreen() {
         <Text className="text-sm text-neutral-500 dark:text-neutral-400">{user?.email}</Text>
         {user?.timezone ? <Text className="mt-1 text-xs text-neutral-400">Timezone: {user.timezone}</Text> : null}
       </View>
+      )}
 
       {/* Appearance */}
       <View className="gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
@@ -146,9 +163,11 @@ export default function ProfileScreen() {
         <Row icon={FileText} label="Terms of Service" onPress={() => router.push("/terms")} />
       </View>
 
-      <Pressable onPress={() => logout()} className="items-center rounded-lg bg-blue-600 py-3.5 active:opacity-80">
-        <Text className="font-semibold text-white">Sign out</Text>
-      </Pressable>
+      {user ? (
+        <Pressable onPress={() => logout()} className="items-center rounded-lg bg-blue-600 py-3.5 active:opacity-80">
+          <Text className="font-semibold text-white">Sign out</Text>
+        </Pressable>
+      ) : null}
 
       <Text className="text-center text-xs text-neutral-400">The 12 Week Year · v{version}</Text>
     </Screen>
