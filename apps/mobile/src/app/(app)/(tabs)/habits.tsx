@@ -34,15 +34,23 @@ export default function HabitsScreen() {
   const active = habits?.filter((h) => h.active) ?? [];
   const archived = habits?.filter((h) => !h.active) ?? [];
 
-  // Fraction (0–1) of active habits completed on a given day — drives the day box's green fill.
-  const dayFraction = (iso: string) =>
-    active.length ? active.filter((h) => h.completionDates.includes(iso)).length / active.length : 0;
+  // Habits that existed on a given day (a habit only counts from its startDate — adding a new habit
+  // today must NOT retroactively make earlier days look incomplete).
+  const expectedOn = (iso: string) => active.filter((h) => h.startDate <= iso);
 
-  // "Perfect-day" streak: consecutive days where ALL active habits were completed. Anything under
-  // 100% breaks it. Today not-yet-complete doesn't break it (we start counting from yesterday).
+  // Fraction (0–1) of that day's expected habits that were completed — drives the box's green fill.
+  const dayFraction = (iso: string) => {
+    const expected = expectedOn(iso);
+    return expected.length ? expected.filter((h) => h.completionDates.includes(iso)).length / expected.length : 0;
+  };
+
+  // "Perfect-day" streak: consecutive days where ALL habits that existed that day were completed.
+  // Anything under 100% breaks it. Today not-yet-complete doesn't break it (count from yesterday).
   const perfectStreak = useMemo(() => {
-    if (active.length === 0) return 0;
-    const isPerfect = (iso: string) => active.every((h) => h.completionDates.includes(iso));
+    const isPerfect = (iso: string) => {
+      const expected = expectedOn(iso);
+      return expected.length > 0 && expected.every((h) => h.completionDates.includes(iso));
+    };
     const cursor = parseIsoDate(TODAY);
     if (!isPerfect(TODAY)) cursor.setDate(cursor.getDate() - 1);
     let streak = 0;
@@ -51,7 +59,8 @@ export default function HabitsScreen() {
       cursor.setDate(cursor.getDate() - 1);
     }
     return streak;
-  }, [active]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habits]);
 
   const weekDays = useMemo(() => {
     const ws = startOfWeek(new Date());

@@ -7,14 +7,12 @@ import {
   toIsoDate,
   useCurrentQuarter,
   useGoalActions,
-  useHabitActions,
   useHabits,
   weekDates,
   weekRangeLabel,
 } from "@twy/core";
 import { Screen } from "@/components/screen";
 import { GoalRow } from "@/components/goal-row";
-import { tapHaptic } from "@/lib/haptics";
 import { useColors } from "@/theme";
 
 const TODAY = toIsoDate(new Date());
@@ -22,7 +20,6 @@ const TODAY = toIsoDate(new Date());
 export default function WeekScreen() {
   const { data: quarter, isError: notPlanned, refetch } = useCurrentQuarter();
   const { data: habits } = useHabits();
-  const actions = useHabitActions();
   const goalActions = useGoalActions();
   const router = useRouter();
   const c = useColors();
@@ -62,14 +59,16 @@ export default function WeekScreen() {
   const goal = quarter.goals.find((g) => g.week === selectedWeek);
   const days = weekDates(quarter.startDate, quarter.endDate, selectedWeek);
 
-  // Week score = habit completions ÷ slots, over the days elapsed so far this week (Sun→today).
-  // A fair consistency % that grows through the week; matches how the app scores habit consistency.
+  // Week score = completed ÷ slots over the days elapsed this week (Sun→today). Each habit only
+  // counts from its startDate, so adding a habit today doesn't retroactively lower earlier days.
   const elapsed = days.map(toIsoDate).filter((iso) => iso <= TODAY);
-  const slots = activeHabits.length * elapsed.length;
-  const doneSlots = elapsed.reduce(
-    (sum, iso) => sum + activeHabits.filter((h) => h.completionDates.includes(iso)).length,
-    0,
-  );
+  let slots = 0;
+  let doneSlots = 0;
+  for (const iso of elapsed) {
+    const expected = activeHabits.filter((h) => h.startDate <= iso);
+    slots += expected.length;
+    doneSlots += expected.filter((h) => h.completionDates.includes(iso)).length;
+  }
   const weekScore = slots > 0 ? Math.round((doneSlots / slots) * 100) : null;
 
   return (
@@ -179,24 +178,16 @@ export default function WeekScreen() {
                 {days.map((d) => {
                   const iso = toIsoDate(d);
                   const done = h.completionDates.includes(iso);
-                  const future = iso > TODAY;
+                  // Read-only here (toggle on the Habits tab). "n/a" = future day or before the habit existed.
+                  const na = iso > TODAY || iso < h.startDate;
                   return (
-                    <Pressable
-                      key={iso}
-                      disabled={future}
-                      onPress={() => {
-                        tapHaptic();
-                        actions.toggle(h, iso);
-                      }}
-                      hitSlop={6}
-                      className="w-7 items-center py-1"
-                    >
+                    <View key={iso} className="w-7 items-center py-1">
                       <View
                         className={`h-4 w-4 rounded-full ${
-                          done ? "bg-blue-600" : future ? "bg-neutral-100 dark:bg-neutral-800" : "bg-neutral-200 dark:bg-neutral-700"
+                          done ? "bg-blue-600" : na ? "bg-neutral-100 dark:bg-neutral-800" : "bg-neutral-200 dark:bg-neutral-700"
                         }`}
                       />
-                    </Pressable>
+                    </View>
                   );
                 })}
               </View>
