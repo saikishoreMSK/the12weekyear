@@ -1,6 +1,7 @@
 // react-native-android-widget renders raw functions; opt this file out of the React Compiler.
 "use no memo";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Appearance } from "react-native";
 import { FlexWidget, TextWidget, type WidgetTaskHandlerProps } from "react-native-android-widget";
 
@@ -32,9 +33,20 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
       return;
     }
     if (!snapshot) {
+      // Diagnostic: show what storage the headless task can actually see. If it lists twy.* keys but
+      // not the snapshot, the app didn't write it; if it shows 0 keys, the headless task has its own
+      // (empty) storage — i.e. the app's writes aren't visible here.
+      let keys: readonly string[] = [];
+      try {
+        keys = await AsyncStorage.getAllKeys();
+      } catch (err) {
+        keys = [`ERR ${String(err)}`];
+      }
+      const twy = keys.filter((k) => k.startsWith("twy"));
       renderWidget(
-        <FlexWidget clickAction="OPEN_APP" style={{ width, height, backgroundColor: colors.card, borderRadius: 16, padding: 14, justifyContent: "center" }}>
-          <TextWidget text="Open the app once to load your data" style={{ fontSize: 13, color: colors.muted }} />
+        <FlexWidget clickAction="OPEN_APP" style={{ width, height, backgroundColor: colors.card, borderRadius: 16, padding: 10, justifyContent: "center", flexGap: 4 }}>
+          <TextWidget text="Waiting for app data…" style={{ fontSize: 12, color: colors.text }} />
+          <TextWidget text={`${keys.length} keys · twy: ${twy.join(", ") || "none"}`} style={{ fontSize: 9, color: colors.muted }} />
         </FlexWidget>,
       );
       return;

@@ -131,6 +131,7 @@ export default function WeekScreen() {
           <GoalRow
             goal={goal}
             onToggle={() => goalActions.toggle(quarter.id, goal, quarter.currentWeek)}
+            onRename={(title) => goalActions.rename(quarter.id, goal.id, title)}
           />
         ) : (
           <AddWeekGoal
@@ -156,16 +157,18 @@ export default function WeekScreen() {
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">No habits yet.</Text>
         ) : (
           <View className="gap-3 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
-            {/* Day-of-week header */}
+            {/* Day-of-week header (weekday letter + date number, like the web grid) */}
             <View className="flex-row">
               <View className="flex-1" />
               {days.map((d) => (
-                <Text
-                  key={toIsoDate(d)}
-                  className="w-7 text-center text-[10px] text-neutral-400"
-                >
-                  {d.toLocaleDateString(undefined, { weekday: "narrow" })}
-                </Text>
+                <View key={toIsoDate(d)} className="w-7 items-center">
+                  <Text className="text-[10px] text-neutral-400">
+                    {d.toLocaleDateString(undefined, { weekday: "narrow" })}
+                  </Text>
+                  <Text className="text-[10px] font-medium text-neutral-500 dark:text-neutral-300">
+                    {d.getDate()}
+                  </Text>
+                </View>
               ))}
             </View>
             {activeHabits.map((h) => (

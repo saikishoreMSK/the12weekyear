@@ -75,6 +75,7 @@ export function QuarterView({ quarter }: { quarter: Quarter }) {
                 key={goal.id}
                 goal={goal}
                 onToggle={() => goalActions.toggle(quarter.id, goal, quarter.currentWeek)}
+                onRename={(title) => goalActions.rename(quarter.id, goal.id, title)}
               />
             ))}
           </View>

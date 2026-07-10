@@ -79,5 +79,26 @@ export function useGoalActions() {
         qc.invalidateQueries({ queryKey: ["quarter"] });
       }
     },
+
+    /** Rename a goal: optimistic title update in every cached quarter, then persist (title only —
+     * doesn't affect the score, so no recompute). Keeps the optimistic value if the write fails. */
+    async rename(quarterId: string, goalId: string, title: string) {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+      qc.getQueryCache()
+        .findAll({ queryKey: ["quarter"] })
+        .forEach((q) =>
+          qc.setQueryData<Quarter>(q.queryKey, (old) =>
+            old
+              ? { ...old, goals: old.goals.map((g) => (g.id === goalId ? { ...g, title: trimmed } : g)) }
+              : old,
+          ),
+        );
+      try {
+        await quarterApi.updateGoal(quarterId, goalId, { title: trimmed });
+      } catch {
+        // Keep the optimistic title; a later successful refetch reconciles with the server.
+      }
+    },
   };
 }

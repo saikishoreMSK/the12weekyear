@@ -99,25 +99,26 @@ export default function HabitsScreen() {
                     key={iso}
                     disabled={future}
                     onPress={() => setSelected(iso)}
-                    className={`h-14 w-9 justify-end overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 ${
-                      isSel ? "border-2 border-blue-600" : ""
+                    // Border is always 2px (color-only change on select) so selecting a day never
+                    // resizes the box — the layout shift was what made fills collapse on Fabric.
+                    className={`relative h-14 w-9 items-center justify-center overflow-hidden rounded-lg border-2 bg-neutral-100 dark:bg-neutral-800 ${
+                      isSel ? "border-blue-600" : "border-transparent"
                     } ${future ? "opacity-40" : ""}`}
                   >
-                    {/* Green fill rises from the bottom with the share of habits done that day; full = brighter.
-                        Bottom-aligned flow child (not absolute) so it lays out reliably on Fabric. */}
-                    <View
-                      className={`w-full ${full ? "bg-emerald-500" : "bg-emerald-600"}`}
-                      style={{ height: `${Math.round(frac * 100)}%` }}
-                    />
-                    {/* Labels overlay the whole box, always bright so Sun–Sat read clearly on any fill. */}
-                    <View className="absolute inset-0 items-center justify-center">
-                      <Text className="text-[10px] font-medium text-neutral-900 dark:text-neutral-50">
-                        {DOW[d.getDay()]}
-                      </Text>
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-                        {d.getDate()}
-                      </Text>
-                    </View>
+                    {/* Green fill rises with the share of habits done that day; full = brighter.
+                        PIXEL height (not %) + absolute position so it always resolves on Fabric. */}
+                    {frac > 0 ? (
+                      <View
+                        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: Math.round(frac * 56) }}
+                        className={full ? "bg-emerald-500" : "bg-emerald-600"}
+                      />
+                    ) : null}
+                    <Text className="text-[10px] font-medium text-neutral-900 dark:text-neutral-50">
+                      {DOW[d.getDay()]}
+                    </Text>
+                    <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+                      {d.getDate()}
+                    </Text>
                   </Pressable>
                 );
               })}
