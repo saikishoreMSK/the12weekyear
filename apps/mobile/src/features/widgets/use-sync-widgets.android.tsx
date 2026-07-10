@@ -5,37 +5,17 @@ import { useEffect } from "react";
 import { AppState, useColorScheme } from "react-native";
 import { requestWidgetUpdate } from "react-native-android-widget";
 
-import { quoteOfTheDay, toIsoDate, useCurrentQuarter, useHabits, weekDates, type Habit, type Quarter } from "@twy/core";
-import { saveWidgetSnapshot, type WidgetSnapshot } from "./snapshot";
+import { quoteOfTheDay, useCurrentQuarter, useHabits, type Habit, type Quarter } from "@twy/core";
+import { buildWidgetSnapshot } from "./snapshot";
 import { QuarterWidget, QuoteWidget, TodayHabitsWidget, WeekWidget, WIDGET_COLORS, type WidgetColors } from "./widgets";
 
-/** Build the snapshot, persist it (for the headless task), and push a live update to placed widgets. */
+/**
+ * Push a live update to any placed widgets. The snapshot PERSISTENCE lives in useWidgetSnapshot (a
+ * plain module) — this hook only handles the native live-push, so the write path never depends on
+ * react-native-android-widget.
+ */
 function syncWidgets(quarter: Quarter | undefined, habits: Habit[] | undefined, colors: WidgetColors): void {
-  const activeHabits = (habits ?? []).filter((h) => h.active);
-  const today = toIsoDate(new Date());
-  const habitsSnap = activeHabits.map((h) => ({ name: h.name, done: h.completionDates.includes(today) }));
-
-  let quarterSnap: WidgetSnapshot["quarter"] = null;
-  let weekSnap: WidgetSnapshot["week"] = null;
-  if (quarter) {
-    quarterSnap = {
-      label: `Q${quarter.quarterNumber} · ${quarter.label}`,
-      year: quarter.year,
-      score: quarter.sprintScore,
-      currentDay: quarter.currentDay,
-      totalDays: quarter.totalDays,
-    };
-    const wk = quarter.currentWeek ?? 1;
-    const goal = quarter.goals.find((g) => g.week === wk) ?? null;
-    const days = weekDates(quarter.startDate, quarter.endDate, wk).map((d) =>
-      activeHabits.some((h) => h.completionDates.includes(toIsoDate(d))),
-    );
-    weekSnap = { number: wk, goalTitle: goal?.title ?? null, goalDone: goal?.done ?? false, days };
-  }
-
-  const snapshot: WidgetSnapshot = { quarter: quarterSnap, week: weekSnap, habits: habitsSnap };
-  void saveWidgetSnapshot(snapshot);
-
+  const snap = buildWidgetSnapshot(quarter, habits);
   const notFound = () => {};
   void requestWidgetUpdate({
     widgetName: "Quote",
@@ -44,25 +24,25 @@ function syncWidgets(quarter: Quarter | undefined, habits: Habit[] | undefined, 
   });
   void requestWidgetUpdate({
     widgetName: "Quarter",
-    renderWidget: (info) => <QuarterWidget quarter={quarterSnap} colors={colors} width={info.width} height={info.height} />,
+    renderWidget: (info) => <QuarterWidget quarter={snap.quarter} colors={colors} width={info.width} height={info.height} />,
     widgetNotFound: notFound,
   });
   void requestWidgetUpdate({
     widgetName: "Week",
-    renderWidget: (info) => <WeekWidget week={weekSnap} colors={colors} width={info.width} height={info.height} />,
+    renderWidget: (info) => <WeekWidget week={snap.week} colors={colors} width={info.width} height={info.height} />,
     widgetNotFound: notFound,
   });
   void requestWidgetUpdate({
     widgetName: "TodayHabits",
-    renderWidget: (info) => <TodayHabitsWidget habits={habitsSnap} colors={colors} width={info.width} height={info.height} />,
+    renderWidget: (info) => <TodayHabitsWidget habits={snap.habits} colors={colors} width={info.width} height={info.height} />,
     widgetNotFound: notFound,
   });
 }
 
 /**
- * Keeps the home-screen widgets in sync: writes a snapshot (read by the headless task handler when
- * the app is closed) and pushes a live update to placed widgets whenever the data changes AND every
- * time the app returns to the foreground — so a widget added while the app was open still gets data.
+ * Pushes live widget updates whenever the data changes AND every time the app returns to the
+ * foreground — so a widget added while the app was open still gets data. Persistence is handled
+ * separately by useWidgetSnapshot.
  */
 export function useSyncWidgets(): void {
   const { data: quarter } = useCurrentQuarter();

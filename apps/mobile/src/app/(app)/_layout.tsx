@@ -5,6 +5,7 @@ import * as Notifications from "expo-notifications";
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
 import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
+import { useWidgetSnapshot } from "@/features/widgets/use-widget-snapshot";
 import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
 import { useColors } from "@/theme";
 
@@ -18,7 +19,8 @@ export default function AppLayout() {
   const c = useColors();
   const router = useRouter();
 
-  useSyncWidgets(); // keep Android widgets in sync (no-op on web/iOS)
+  useWidgetSnapshot(); // persist widget data for the headless task (plain module, always runs)
+  useSyncWidgets(); // push live widget updates while the app is open (no-op on web/iOS)
   useQuickActions(); // app-icon shortcuts (no-op on web)
 
   // Tapping a reminder opens the relevant screen.
