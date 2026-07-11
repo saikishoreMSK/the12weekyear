@@ -9,9 +9,21 @@ let pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) throw new Error("DATABASE_URL is not set (needed for the admin panel).");
-    pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false }, max: 3 });
+    const raw = process.env.DATABASE_URL;
+    if (!raw) throw new Error("DATABASE_URL is not set (needed for the admin panel).");
+    // The backend stores this as a JDBC URL (jdbc:postgresql://host:port/db) with the credentials in
+    // separate DATABASE_USERNAME/PASSWORD vars. Parse it into discrete fields (not connectionString)
+    // so our ssl option is actually honored — Supabase serves a chain Node doesn't trust by default.
+    const url = new URL(raw.replace(/^jdbc:/, ""));
+    pool = new Pool({
+      host: url.hostname,
+      port: url.port ? Number(url.port) : 5432,
+      database: url.pathname.replace(/^\//, "") || "postgres",
+      user: process.env.DATABASE_USERNAME ?? (url.username ? decodeURIComponent(url.username) : undefined),
+      password: process.env.DATABASE_PASSWORD ?? (url.password ? decodeURIComponent(url.password) : undefined),
+      ssl: { rejectUnauthorized: false },
+      max: 3,
+    });
   }
   return pool;
 }
