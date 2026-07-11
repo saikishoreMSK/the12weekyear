@@ -4,17 +4,17 @@
     "slug": "the12weekyear",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo-black-512.png",
     "scheme": "twelveweekyear",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/logo-black-512.png"
     },
     "android": {
       "package": "com.twelveweekyear.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0b0b0c",
-        "foregroundImage": "./assets/images/adaptive-foreground.png"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/images/logo-black-512.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -29,12 +29,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./assets/images/logo-black.png",
-          "imageWidth": 180,
-          "dark": {
-            "backgroundColor": "#0b0b0c",
-            "image": "./assets/images/logo-white.png"
-          }
+          "image": "./assets/images/logo-black-512.png",
+          "imageWidth": 200
         }
       ],
       [
