@@ -7,6 +7,7 @@ import { Appearance } from "react-native";
 import { FlexWidget, TextWidget, type WidgetTaskHandlerProps } from "react-native-android-widget";
 
 import { queueWrite, quoteOfTheDay, toIsoDate } from "@twy/core";
+import { refreshWidgets } from "./refresh-widgets";
 import { loadWidgetSnapshot, saveWidgetSnapshot } from "./snapshot";
 import {
   QuarterCountdownWidget,
@@ -47,6 +48,9 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
         queueWrite({ kind: "completion", habitId, date: toIsoDate(new Date()), done: habit.done });
       }
       renderWidget(<TodayHabitsWidget habits={snapshot.habits} colors={colors} {...size} />);
+      // Update every other placed widget too. Today's-progress recomputes exactly from the done
+      // flags; the streak needs full history so it refreshes precisely on the next app open.
+      refreshWidgets(snapshot);
       return;
     }
 
