@@ -1,12 +1,15 @@
 import { useEffect } from "react";
 import { Stack, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
 import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
 import { useWidgetSnapshot } from "@/features/widgets/use-widget-snapshot";
 import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
+import { adoptLocalData } from "@/features/sync/adopt";
+import { useIsOnline } from "@/lib/query";
 import { useColors } from "@/theme";
 
 /**
@@ -18,10 +21,17 @@ export default function AppLayout() {
   const { status } = useAuth();
   const c = useColors();
   const router = useRouter();
+  const qc = useQueryClient();
+  const online = useIsOnline();
 
   useWidgetSnapshot(); // persist widget data for the headless task (plain module, always runs)
   useSyncWidgets(); // push live widget updates while the app is open (no-op on web/iOS)
   useQuickActions(); // app-icon shortcuts (no-op on web)
+
+  // On sign-in, upload any guest data to the cloud once (Phase 2). Idempotent + self-guarded.
+  useEffect(() => {
+    if (status === "authenticated" && online) void adoptLocalData(qc);
+  }, [status, online, qc]);
 
   // Tapping a reminder opens the relevant screen.
   useEffect(() => {

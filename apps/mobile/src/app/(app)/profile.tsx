@@ -7,6 +7,7 @@ import Constants from "expo-constants";
 import { Bell, Check, ChevronRight, FileText, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
+import { retryAdoption, useAdoptState } from "@/features/sync/adopt";
 import { Screen } from "@/components/screen";
 import { useIsOnline } from "@/lib/query";
 import { drainOutbox, usePendingCount } from "@/lib/outbox";
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const c = useColors();
   const version = Constants.expoConfig?.version ?? "1.0.0";
 
+  const adopt = useAdoptState();
   const [editingName, setEditingName] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -126,6 +128,22 @@ export default function ProfileScreen() {
         {user?.timezone ? <Text className="mt-1 text-xs text-neutral-400">Timezone: {user.timezone}</Text> : null}
       </View>
       )}
+
+      {/* One-time local→cloud upload after sign-in */}
+      {user && adopt === "importing" ? (
+        <View className="rounded-xl border border-blue-500/40 bg-blue-500/10 p-3">
+          <Text className="text-sm text-blue-700 dark:text-blue-300">Backing up your local data to the cloud…</Text>
+        </View>
+      ) : null}
+      {user && adopt === "error" ? (
+        <Pressable
+          onPress={() => retryAdoption(qc)}
+          className="flex-row items-center justify-between rounded-xl border border-red-500/40 bg-red-500/10 p-3 active:opacity-70"
+        >
+          <Text className="text-sm text-red-700 dark:text-red-300">Couldn&apos;t back up your local data.</Text>
+          <Text className="text-sm font-semibold text-red-700 dark:text-red-300">Retry</Text>
+        </Pressable>
+      ) : null}
 
       {/* Appearance */}
       <View className="gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">

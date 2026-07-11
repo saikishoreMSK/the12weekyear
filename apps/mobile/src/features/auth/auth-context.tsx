@@ -24,6 +24,7 @@ import { authApi, registerUnauthorizedHandler } from "@/lib/api";
 import { tokenStorage } from "@/lib/token-storage";
 import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
 import { hasPendingProfile } from "@/lib/outbox";
+import { resetAdoption } from "@/features/sync/adopt";
 
 // "guest" = using the app locally with no account (local-first). "authenticated" = signed in (cloud).
 type Status = "loading" | "authenticated" | "guest";
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void tokenStorage.clear();
     void clearUser();
     setUser(null);
+    resetAdoption(); // allow a future sign-in to adopt local data again
     setGuestMode(true); // fall back to local-first guest mode (keeps local data)
     setStatus("guest");
   }, []);

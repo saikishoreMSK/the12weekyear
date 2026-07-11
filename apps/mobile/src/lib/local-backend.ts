@@ -26,6 +26,7 @@ import {
   type CreateHabitInput,
   type CreateQuarterInput,
   type Goal,
+  type GuestExport,
   type Habit,
   type LocalBackend,
   type Quarter,
@@ -461,3 +462,50 @@ const localBackend: LocalBackend = {
 };
 
 configureLocalBackend(localBackend);
+
+// ---- guest-data adoption helpers (Phase 2: upload local data to the cloud on sign-in) ----
+
+/** True if the guest has any local data worth uploading. */
+export async function hasLocalData(): Promise<boolean> {
+  const d = await load();
+  return d.quarters.length > 0 || d.habits.length > 0;
+}
+
+/** Flatten the local DB into the upload payload (goals + reviews nested under their quarter). */
+export async function exportLocalData(): Promise<GuestExport> {
+  const d = await load();
+  return {
+    quarters: d.quarters.map((q) => ({
+      year: q.year,
+      quarterNumber: q.quarterNumber,
+      title: q.title,
+      objective: q.objective,
+      goals: d.goals
+        .filter((g) => g.quarterId === q.id)
+        .map((g) => ({ title: g.title, week: g.week, done: g.done })),
+      reviews: d.reviews
+        .filter((r) => r.quarterId === q.id)
+        .map((r) => ({
+          weekNumber: r.weekNumber,
+          wentWell: r.wentWell,
+          wastedTime: r.wastedTime,
+          biggestWin: r.biggestWin,
+          biggestBlocker: r.biggestBlocker,
+        })),
+    })),
+    habits: d.habits.map((h) => ({
+      name: h.name,
+      description: h.description,
+      color: h.color,
+      startDate: h.startDate,
+      active: h.active,
+      completionDates: [...h.completionDates],
+    })),
+  };
+}
+
+/** Wipe the local DB (called after a successful upload — the data now lives in the cloud). */
+export async function clearLocalData(): Promise<void> {
+  db = emptyDb();
+  await AsyncStorage.setItem(KEY, JSON.stringify(db));
+}
