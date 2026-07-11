@@ -88,6 +88,42 @@
               "previewImage": "./assets/images/icon.png",
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TodayProgress",
+              "label": "Today's progress",
+              "description": "How many of today's habits you've completed",
+              "minWidth": "140dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "QuarterCountdown",
+              "label": "Quarter countdown",
+              "description": "Days left in your current quarter",
+              "minWidth": "140dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Streak",
+              "label": "Habit streak",
+              "description": "Your current perfect-day streak",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
             }
           ]
         }

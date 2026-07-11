@@ -1,22 +1,31 @@
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useCurrentQuarter, useHabits } from "@twy/core";
 import { buildWidgetSnapshot, saveWidgetSnapshot } from "./snapshot";
+import { refreshWidgets } from "./refresh-widgets";
 
 /**
- * Persists the widget snapshot whenever the quarter/habits data changes. Deliberately a PLAIN module
- * — it does NOT import react-native-android-widget and needs no React-Compiler opt-out — so the
- * write path (the only thing the headless widget task depends on) can't be affected by the native
- * widget library. Runs on every platform but only matters on Android; harmless elsewhere.
+ * Persists the widget snapshot AND pushes a live update to placed widgets whenever the quarter/habits
+ * data changes (and on foreground). Deliberately a PLAIN module — it imports no native code directly
+ * (the native push lives behind the platform-split refresh-widgets) and needs no React-Compiler
+ * opt-out, so both the write and the push run reliably (the old native hook's effect did not).
  */
 export function useWidgetSnapshot(): void {
   const { data: quarter } = useCurrentQuarter();
   const { data: habits } = useHabits();
 
   useEffect(() => {
-    // Heartbeat proves this effect ran (visible in the widget's diagnostic if the snapshot is ever missing).
+    const snap = buildWidgetSnapshot(quarter, habits);
     void AsyncStorage.setItem("twy.widgetHeartbeat", "1");
-    void saveWidgetSnapshot(buildWidgetSnapshot(quarter, habits));
+    void saveWidgetSnapshot(snap);
+    refreshWidgets(snap); // live push (Android; no-op on web)
+
+    // Re-push on foreground so a widget added while the app was open still receives data.
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") refreshWidgets(snap);
+    });
+    return () => sub.remove();
   }, [quarter, habits]);
 }

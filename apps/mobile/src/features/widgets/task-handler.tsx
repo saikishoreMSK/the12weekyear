@@ -1,21 +1,32 @@
 // react-native-android-widget renders raw functions; opt this file out of the React Compiler.
 "use no memo";
 
+import "@/lib/outbox"; // registers the offline write queue so queueWrite works in the headless task
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Appearance } from "react-native";
 import { FlexWidget, TextWidget, type WidgetTaskHandlerProps } from "react-native-android-widget";
 
-import { quoteOfTheDay } from "@twy/core";
-import { loadWidgetSnapshot } from "./snapshot";
-import { QuarterWidget, QuoteWidget, TodayHabitsWidget, WeekWidget, WIDGET_COLORS } from "./widgets";
+import { queueWrite, quoteOfTheDay, toIsoDate } from "@twy/core";
+import { loadWidgetSnapshot, saveWidgetSnapshot } from "./snapshot";
+import {
+  QuarterCountdownWidget,
+  QuarterWidget,
+  QuoteWidget,
+  StreakWidget,
+  TodayHabitsWidget,
+  TodayProgressWidget,
+  WeekWidget,
+  WIDGET_COLORS,
+} from "./widgets";
 
 /**
- * Runs headless (even with the app closed) whenever Android needs to render/refresh a widget.
- * Reads the last snapshot the app wrote; the quote is computed directly (it's deterministic).
- * On any error it draws the message into the widget so it can be diagnosed without device logs.
+ * Runs headless (even with the app closed) whenever Android renders/refreshes a widget or a widget
+ * is tapped. Reads the last snapshot the app wrote; the quote is computed directly. Tapping a habit
+ * (TOGGLE_HABIT) flips today's completion in the snapshot and queues the write to the outbox, which
+ * is replayed on the next app open (guest → local store, signed-in → cloud).
  */
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
-  const { widgetInfo, widgetAction, renderWidget } = props;
+  const { widgetInfo, widgetAction, clickAction, clickActionData, renderWidget } = props;
   if (widgetAction === "WIDGET_DELETED") return;
 
   const width = widgetInfo.width;
@@ -23,19 +34,28 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
 
   try {
     const colors = WIDGET_COLORS[Appearance.getColorScheme() === "dark" ? "dark" : "light"];
-    const snapshot = await loadWidgetSnapshot();
     const size = { width, height };
+    const snapshot = await loadWidgetSnapshot();
 
-    // Quote needs no app data. The data widgets do: if the app hasn't written a snapshot yet, say so
-    // explicitly (distinct from a real "no quarter planned") so it's clear the app must be opened once.
+    // Interactive: tap a habit row to toggle today's completion.
+    if (clickAction === "TOGGLE_HABIT" && snapshot) {
+      const habitId = String(clickActionData?.habitId ?? "");
+      const habit = snapshot.habits.find((h) => h.id === habitId);
+      if (habit) {
+        habit.done = !habit.done;
+        await saveWidgetSnapshot(snapshot);
+        queueWrite({ kind: "completion", habitId, date: toIsoDate(new Date()), done: habit.done });
+      }
+      renderWidget(<TodayHabitsWidget habits={snapshot.habits} colors={colors} {...size} />);
+      return;
+    }
+
+    // Quote needs no app data. The data widgets do: if the app hasn't written a snapshot yet, say so.
     if (widgetInfo.widgetName === "Quote") {
       renderWidget(<QuoteWidget quote={quoteOfTheDay()} colors={colors} {...size} />);
       return;
     }
     if (!snapshot) {
-      // Diagnostic: show what storage the headless task can actually see. If it lists twy.* keys but
-      // not the snapshot, the app didn't write it; if it shows 0 keys, the headless task has its own
-      // (empty) storage — i.e. the app's writes aren't visible here.
       let keys: readonly string[] = [];
       try {
         keys = await AsyncStorage.getAllKeys();
@@ -61,6 +81,15 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
         break;
       case "TodayHabits":
         renderWidget(<TodayHabitsWidget habits={snapshot.habits} colors={colors} {...size} />);
+        break;
+      case "TodayProgress":
+        renderWidget(<TodayProgressWidget habits={snapshot.habits} colors={colors} {...size} />);
+        break;
+      case "QuarterCountdown":
+        renderWidget(<QuarterCountdownWidget quarter={snapshot.quarter} colors={colors} {...size} />);
+        break;
+      case "Streak":
+        renderWidget(<StreakWidget streak={snapshot.streak} colors={colors} {...size} />);
         break;
     }
   } catch (e) {

@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { LoadingScreen } from "@/components/loading";
-import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
 import { useWidgetSnapshot } from "@/features/widgets/use-widget-snapshot";
 import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
 import { adoptLocalData } from "@/features/sync/adopt";
@@ -25,8 +24,7 @@ export default function AppLayout() {
   const qc = useQueryClient();
   const online = useIsOnline();
 
-  useWidgetSnapshot(); // persist widget data for the headless task (plain module, always runs)
-  useSyncWidgets(); // push live widget updates while the app is open (no-op on web/iOS)
+  useWidgetSnapshot(); // persist widget data + push live widget updates (plain module, always runs)
   useQuickActions(); // app-icon shortcuts (no-op on web)
   useCloudSync(); // account-switch cache isolation + pull-down on foreground (signed-in only)
 
