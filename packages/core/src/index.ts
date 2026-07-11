@@ -27,6 +27,7 @@ export * from "./analytics/queries";
 export * from "./analytics/analytics-calc";
 export * from "./review/types";
 export * from "./review/api";
+export * from "./feedback/api";
 export * from "./quote/quotes";
 export * from "./quote/quote-of-the-day";
 export * from "./date";

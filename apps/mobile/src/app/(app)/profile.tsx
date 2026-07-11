@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, BookOpen, Check, ChevronRight, FileText, Monitor, Moon, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, Sun, SunMoon, X } from "lucide-react-native";
+import { Bell, BookOpen, Check, ChevronRight, FileText, MessageSquare, Monitor, Moon, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, Sun, SunMoon, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { retryAdoption, useAdoptState } from "@/features/sync/adopt";
@@ -172,6 +172,7 @@ export default function ProfileScreen() {
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Row icon={ShieldCheck} label="Privacy Policy" first onPress={() => router.push("/privacy")} />
         <Row icon={FileText} label="Terms of Service" onPress={() => router.push("/terms")} />
+        <Row icon={MessageSquare} label="Send feedback" onPress={() => router.push("/feedback")} />
       </View>
 
       {user ? (

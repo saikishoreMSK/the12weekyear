@@ -67,6 +67,7 @@ export default function AppLayout() {
       <Stack.Screen name="review" options={{ title: "Weekly review" }} />
       <Stack.Screen name="privacy" options={{ title: "Privacy Policy" }} />
       <Stack.Screen name="terms" options={{ title: "Terms of Service" }} />
+      <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
     </Stack>
   );
 }
