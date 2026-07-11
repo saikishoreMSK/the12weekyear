@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, Check, ChevronRight, FileText, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, X } from "lucide-react-native";
+import { Bell, BookOpen, Check, ChevronRight, FileText, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { retryAdoption, useAdoptState } from "@/features/sync/adopt";
@@ -145,31 +145,29 @@ export default function ProfileScreen() {
         </Pressable>
       ) : null}
 
-      {/* Appearance */}
-      <View className="gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-        <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Appearance</Text>
-        <View className="flex-row gap-2">
-          {THEME_OPTIONS.map((opt) => {
-            const on = theme === opt;
-            return (
-              <Pressable
-                key={opt}
-                onPress={() => pickTheme(opt)}
-                className={`flex-1 items-center rounded-lg border py-2 ${on ? "border-blue-600 bg-blue-600" : "border-neutral-300 dark:border-neutral-700"}`}
-              >
-                <Text className={`text-sm capitalize ${on ? "text-white" : "text-neutral-700 dark:text-neutral-300"}`}>
-                  {opt}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text className="text-xs text-neutral-400">Dark is the default.</Text>
-      </View>
-
-      {/* Settings */}
+      {/* Settings (Appearance inline + actions) */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <Row icon={Share2} label="Share progress" first onPress={() => router.push("/share")} />
+        <View className="gap-2 border-b border-neutral-200 p-4 dark:border-neutral-800">
+          <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Appearance</Text>
+          <View className="flex-row gap-2">
+            {THEME_OPTIONS.map((opt) => {
+              const on = theme === opt;
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => pickTheme(opt)}
+                  className={`flex-1 items-center rounded-lg border py-2 ${on ? "border-blue-600 bg-blue-600" : "border-neutral-300 dark:border-neutral-700"}`}
+                >
+                  <Text className={`text-sm capitalize ${on ? "text-white" : "text-neutral-700 dark:text-neutral-300"}`}>
+                    {opt}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+        <Row icon={BookOpen} label="How to use" first onPress={() => router.push("/how-to-use")} />
+        <Row icon={Share2} label="Share progress" onPress={() => router.push("/share")} />
         <Row icon={RefreshCw} label="Sync now" value={syncValue} onPress={syncNow} />
         <Row icon={Bell} label="Notifications" onPress={() => router.push("/notifications")} />
         <Row icon={Sparkles} label="Go Premium" value="Coming soon" disabled />
@@ -187,7 +185,7 @@ export default function ProfileScreen() {
         </Pressable>
       ) : null}
 
-      <Text className="text-center text-xs text-neutral-400">The 12 Week Year · v{version}</Text>
+      <Text className="text-center text-xs text-neutral-400">Quarterly · v{version}</Text>
     </Screen>
   );
 }

@@ -33,7 +33,7 @@ export default function ShareScreen() {
     <Screen>
       {/* Dark share card */}
       <View ref={cardRef} collapsable={false} className="gap-4 rounded-2xl bg-neutral-900 p-6">
-        <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400">The 12 Week Year</Text>
+        <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Quarterly</Text>
 
         {quarter ? (
           <Text className="text-sm text-neutral-300">

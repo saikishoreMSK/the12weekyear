@@ -61,6 +61,7 @@ export default function AppLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="profile" options={{ title: "Profile" }} />
+      <Stack.Screen name="how-to-use" options={{ title: "How to use" }} />
       <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
       <Stack.Screen name="share" options={{ title: "Share progress" }} />
       <Stack.Screen name="habit-detail" options={{ title: "Habit" }} />
