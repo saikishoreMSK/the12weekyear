@@ -14,7 +14,7 @@ export default function PrivacyScreen() {
     <Screen>
       <Text className="text-xs text-neutral-400">Last updated: 2026</Text>
       <P>
-        The 12 Week Year (&quot;the app&quot;) helps you plan quarters, track habits, and review your
+        Quarterly (&quot;the app&quot;) helps you plan quarters, track habits, and review your
         progress. This policy explains what we collect and how we use it.
       </P>
 

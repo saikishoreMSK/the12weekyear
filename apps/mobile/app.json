@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "The 12 Week Year",
+    "name": "Quarterly",
     "slug": "the12weekyear",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -28,9 +28,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f6f6f4",
-          "image": "./assets/images/splash.png",
-          "imageWidth": 260
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/logo-black.png",
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#0b0b0c",
+            "image": "./assets/images/logo-white.png"
+          }
         }
       ],
       [

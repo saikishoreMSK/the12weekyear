@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import {
+  exportCloudData,
   isNetworkError,
   queueWrite,
   setGuestMode,
@@ -25,6 +26,7 @@ import { tokenStorage } from "@/lib/token-storage";
 import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
 import { hasPendingProfile } from "@/lib/outbox";
 import { resetAdoption } from "@/features/sync/adopt";
+import { writeCloudSnapshot } from "@/lib/local-backend";
 
 // "guest" = using the app locally with no account (local-first). "authenticated" = signed in (cloud).
 type Status = "loading" | "authenticated" | "guest";
@@ -174,6 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    // Snapshot the account's cloud data into the local store first (best-effort, while still
+    // authenticated) so guest mode isn't empty after signing out.
+    try {
+      await writeCloudSnapshot(await exportCloudData());
+    } catch {
+      // offline / failed — sign out with whatever local data already exists
+    }
     const refreshToken = await tokenStorage.getRefreshToken();
     try {
       if (refreshToken) await authApi.logout(refreshToken);

@@ -34,7 +34,7 @@ export async function ensurePermission(): Promise<boolean> {
 
 async function scheduleDaily(hour: number, body: string) {
   await Notifications.scheduleNotificationAsync({
-    content: { title: "The 12 Week Year", body, data: { type: "habits" } },
+    content: { title: "Quarterly", body, data: { type: "habits" } },
     trigger: { type: Trigger.DAILY, hour, minute: 0, channelId: CHANNEL_ID },
   });
 }

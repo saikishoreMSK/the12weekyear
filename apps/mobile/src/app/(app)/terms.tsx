@@ -13,7 +13,7 @@ export default function TermsScreen() {
   return (
     <Screen>
       <Text className="text-xs text-neutral-400">Last updated: 2026</Text>
-      <P>By creating an account and using The 12 Week Year, you agree to these terms.</P>
+      <P>By creating an account and using Quarterly, you agree to these terms.</P>
 
       <H>The service</H>
       <P>

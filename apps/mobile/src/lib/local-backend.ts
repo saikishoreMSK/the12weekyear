@@ -509,3 +509,47 @@ export async function clearLocalData(): Promise<void> {
   db = emptyDb();
   await AsyncStorage.setItem(KEY, JSON.stringify(db));
 }
+
+/** Seed the local DB from a cloud snapshot (used at sign-out so guest mode isn't empty). */
+export async function writeCloudSnapshot(data: GuestExport): Promise<void> {
+  const now = new Date().toISOString();
+  const next = emptyDb();
+  for (const q of data.quarters) {
+    const qid = genId();
+    next.quarters.push({
+      id: qid,
+      year: q.year,
+      quarterNumber: q.quarterNumber,
+      title: q.title,
+      objective: q.objective,
+    });
+    for (const g of q.goals) next.goals.push({ id: genId(), quarterId: qid, title: g.title, week: g.week, done: g.done });
+    for (const r of q.reviews) {
+      next.reviews.push({
+        id: genId(),
+        quarterId: qid,
+        weekNumber: r.weekNumber,
+        wentWell: r.wentWell,
+        wastedTime: r.wastedTime,
+        biggestWin: r.biggestWin,
+        biggestBlocker: r.biggestBlocker,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+  for (const h of data.habits) {
+    next.habits.push({
+      id: genId(),
+      name: h.name,
+      description: h.description,
+      color: h.color,
+      startDate: h.startDate,
+      active: h.active,
+      completionDates: [...h.completionDates],
+      createdAt: now,
+    });
+  }
+  db = next;
+  await AsyncStorage.setItem(KEY, JSON.stringify(next));
+}

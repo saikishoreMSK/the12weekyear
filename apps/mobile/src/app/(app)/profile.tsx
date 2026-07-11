@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, BookOpen, Check, ChevronRight, FileText, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, X } from "lucide-react-native";
+import { Bell, BookOpen, Check, ChevronRight, FileText, Monitor, Moon, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, Sun, SunMoon, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { retryAdoption, useAdoptState } from "@/features/sync/adopt";
@@ -75,6 +75,11 @@ export default function ProfileScreen() {
     setColorScheme(pref);
     await saveThemePref(pref);
   }
+  function cycleTheme() {
+    const i = THEME_OPTIONS.indexOf(theme);
+    void pickTheme(THEME_OPTIONS[(i + 1) % THEME_OPTIONS.length]);
+  }
+  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
 
   return (
     <Screen>
@@ -145,28 +150,18 @@ export default function ProfileScreen() {
         </Pressable>
       ) : null}
 
-      {/* Settings (Appearance inline + actions) */}
+      {/* Settings (Appearance + actions) */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <View className="gap-2 border-b border-neutral-200 p-4 dark:border-neutral-800">
-          <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Appearance</Text>
-          <View className="flex-row gap-2">
-            {THEME_OPTIONS.map((opt) => {
-              const on = theme === opt;
-              return (
-                <Pressable
-                  key={opt}
-                  onPress={() => pickTheme(opt)}
-                  className={`flex-1 items-center rounded-lg border py-2 ${on ? "border-blue-600 bg-blue-600" : "border-neutral-300 dark:border-neutral-700"}`}
-                >
-                  <Text className={`text-sm capitalize ${on ? "text-white" : "text-neutral-700 dark:text-neutral-300"}`}>
-                    {opt}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-        <Row icon={BookOpen} label="How to use" first onPress={() => router.push("/how-to-use")} />
+        <Pressable
+          onPress={cycleTheme}
+          className="flex-row items-center gap-3 p-4 active:bg-neutral-100 dark:active:bg-neutral-900"
+        >
+          <SunMoon color={c.muted} size={18} />
+          <Text className="flex-1 text-neutral-900 dark:text-neutral-50">Appearance</Text>
+          <Text className="mr-1 text-sm capitalize text-neutral-400">{theme}</Text>
+          <ThemeIcon color={c.muted} size={18} />
+        </Pressable>
+        <Row icon={BookOpen} label="How to use" onPress={() => router.push("/how-to-use")} />
         <Row icon={Share2} label="Share progress" onPress={() => router.push("/share")} />
         <Row icon={RefreshCw} label="Sync now" value={syncValue} onPress={syncNow} />
         <Row icon={Bell} label="Notifications" onPress={() => router.push("/notifications")} />
