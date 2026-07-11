@@ -9,6 +9,7 @@ import { useSyncWidgets } from "@/features/widgets/use-sync-widgets";
 import { useWidgetSnapshot } from "@/features/widgets/use-widget-snapshot";
 import { useQuickActions } from "@/features/shortcuts/use-quick-actions";
 import { adoptLocalData } from "@/features/sync/adopt";
+import { useCloudSync } from "@/features/sync/use-cloud-sync";
 import { useIsOnline } from "@/lib/query";
 import { useColors } from "@/theme";
 
@@ -27,6 +28,7 @@ export default function AppLayout() {
   useWidgetSnapshot(); // persist widget data for the headless task (plain module, always runs)
   useSyncWidgets(); // push live widget updates while the app is open (no-op on web/iOS)
   useQuickActions(); // app-icon shortcuts (no-op on web)
+  useCloudSync(); // account-switch cache isolation + pull-down on foreground (signed-in only)
 
   // On sign-in, upload any guest data to the cloud once (Phase 2). Idempotent + self-guarded.
   useEffect(() => {
