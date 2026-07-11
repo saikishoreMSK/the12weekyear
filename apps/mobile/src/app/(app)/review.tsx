@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -8,10 +8,10 @@ import { Screen } from "@/components/screen";
 import { useColors } from "@/theme";
 
 const PROMPTS = [
-  { key: "wentWell", label: "What went well?" },
-  { key: "wastedTime", label: "What wasted time?" },
-  { key: "biggestWin", label: "Biggest win?" },
-  { key: "biggestBlocker", label: "Biggest blocker?" },
+  { key: "wentWell", label: "What went well?", placeholder: "e.g. Studied 2 hrs daily and stayed consistent at the gym" },
+  { key: "wastedTime", label: "What wasted time?", placeholder: "e.g. Late-night scrolling; skipped meal prep" },
+  { key: "biggestWin", label: "Biggest win?", placeholder: "e.g. Cleared a tough exam / wrapped a big project at work" },
+  { key: "biggestBlocker", label: "Biggest blocker?", placeholder: "e.g. Poor sleep and a hectic week at the office" },
 ] as const;
 
 type Fields = { wentWell: string; wastedTime: string; biggestWin: string; biggestBlocker: string };
@@ -64,7 +64,7 @@ export default function ReviewScreen() {
     <Screen>
       <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Week {week} review</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+      <View className="flex-row flex-wrap gap-2">
         {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((w) => {
           const on = w === week;
           return (
@@ -78,7 +78,7 @@ export default function ReviewScreen() {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       {PROMPTS.map((p) => (
         <View key={p.key} className="gap-1">
@@ -90,6 +90,7 @@ export default function ReviewScreen() {
               setFields((f) => ({ ...f, [p.key]: t }));
               setSaved(false);
             }}
+            placeholder={p.placeholder}
             placeholderTextColor={c.muted}
             style={{ minHeight: 76, textAlignVertical: "top" }}
             className="rounded-lg border border-neutral-300 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"

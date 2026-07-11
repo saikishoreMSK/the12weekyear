@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import {
@@ -94,8 +94,8 @@ export default function WeekScreen() {
         ) : null}
       </View>
 
-      {/* Week selector */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+      {/* Week selector (2-row wrapping grid) */}
+      <View className="flex-row flex-wrap gap-2">
         {Array.from({ length: quarter.totalWeeks }, (_, i) => i + 1).map((w) => {
           const active = w === selectedWeek;
           const isCurrent = quarter.currentWeek === w;
@@ -119,7 +119,7 @@ export default function WeekScreen() {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       {/* Week goal */}
       <View className="gap-2">

@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 import Constants from "expo-constants";
-import { Bell, BookOpen, Check, ChevronRight, FileText, MessageSquare, Monitor, Moon, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, Sun, SunMoon, X } from "lucide-react-native";
+import { Bell, BookOpen, Check, ChevronRight, FileText, MessageSquare, Moon, Pencil, RefreshCw, Share2, ShieldCheck, Sparkles, Sun, SunMoon, X } from "lucide-react-native";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { retryAdoption, useAdoptState } from "@/features/sync/adopt";
@@ -16,7 +16,6 @@ import { loadThemePref, saveThemePref, type ThemePref } from "@/features/appeara
 import { useColors } from "@/theme";
 
 type IconType = ComponentType<{ color?: string; size?: number }>;
-const THEME_OPTIONS: ThemePref[] = ["system", "light", "dark"];
 
 export default function ProfileScreen() {
   const { user, logout, updateDisplayName } = useAuth();
@@ -75,11 +74,12 @@ export default function ProfileScreen() {
     setColorScheme(pref);
     await saveThemePref(pref);
   }
-  function cycleTheme() {
-    const i = THEME_OPTIONS.indexOf(theme);
-    void pickTheme(THEME_OPTIONS[(i + 1) % THEME_OPTIONS.length]);
+  // Only Light / Dark now (System removed). A legacy "system" pref displays + toggles as Dark.
+  const mode: "light" | "dark" = theme === "light" ? "light" : "dark";
+  function toggleTheme() {
+    void pickTheme(mode === "dark" ? "light" : "dark");
   }
-  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const ThemeIcon = mode === "light" ? Sun : Moon;
 
   return (
     <Screen>
@@ -153,12 +153,12 @@ export default function ProfileScreen() {
       {/* Settings (Appearance + actions) */}
       <View className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
         <Pressable
-          onPress={cycleTheme}
+          onPress={toggleTheme}
           className="flex-row items-center gap-3 p-4 active:bg-neutral-100 dark:active:bg-neutral-900"
         >
           <SunMoon color={c.muted} size={18} />
           <Text className="flex-1 text-neutral-900 dark:text-neutral-50">Appearance</Text>
-          <Text className="mr-1 text-sm capitalize text-neutral-400">{theme}</Text>
+          <Text className="mr-1 text-sm capitalize text-neutral-400">{mode}</Text>
           <ThemeIcon color={c.muted} size={18} />
         </Pressable>
         <Row icon={BookOpen} label="How to use" onPress={() => router.push("/how-to-use")} />
