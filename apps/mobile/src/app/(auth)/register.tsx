@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterValues } from "@twy/core";
 import { ApiException } from "@/lib/api";
 import { useAuth } from "@/features/auth/auth-context";
-import { AuthScreen, Button, ErrorText, LinkText, TextField } from "@/components/ui";
+import { AuthScreen, Button, ErrorText, LinkText, TextField, WakeNotice } from "@/components/ui";
 
 export default function RegisterScreen() {
   const { register: registerUser } = useAuth();
@@ -87,6 +87,8 @@ export default function RegisterScreen() {
       <ErrorText>{formError}</ErrorText>
 
       <Button title="Create account" loading={isSubmitting} onPress={handleSubmit(onSubmit)} />
+
+      <WakeNotice active={isSubmitting} />
 
       <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
         <LinkText onPress={() => router.replace("/login")}>Already have an account? Sign in</LinkText>

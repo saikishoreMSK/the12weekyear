@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ApiException, authApi } from "@/lib/api";
 import { useAuth } from "@/features/auth/auth-context";
 import { useResendCooldown } from "@/features/auth/use-resend-cooldown";
-import { AuthScreen, Button, ErrorText, InfoText, LinkText, TextField } from "@/components/ui";
+import { AuthScreen, Button, ErrorText, InfoText, LinkText, TextField, WakeNotice } from "@/components/ui";
 
 const RESEND_COOLDOWN_SECONDS = 120;
 
@@ -71,6 +71,8 @@ export default function VerifyEmailScreen() {
         disabled={code.length < 6}
         onPress={onVerify}
       />
+
+      <WakeNotice active={submitting} />
 
       <View style={{ alignItems: "center", marginTop: 8, gap: 10 }}>
         <LinkText disabled={cooldown.active} onPress={onResend}>

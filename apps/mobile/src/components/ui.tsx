@@ -1,4 +1,4 @@
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, useEffect, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -114,6 +114,36 @@ export function AuthScreen({
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+/**
+ * A reassuring, escalating notice shown while an auth request is in flight. The API runs on a
+ * free tier that sleeps when idle, so the first request can take ~30–60s to wake it — this tells
+ * the user what's happening instead of an anonymous spinner.
+ */
+export function WakeNotice({ active }: { active: boolean }) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (!active) {
+      setSeconds(0);
+      return;
+    }
+    const start = Date.now();
+    const id = setInterval(() => setSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+
+  if (!active || seconds < 4) return null;
+  const message =
+    seconds < 12
+      ? "Waking up the server…"
+      : seconds < 30
+        ? "The server was asleep and is starting up — this can take up to a minute."
+        : seconds < 60
+          ? "Almost there… free servers can take ~60s to wake. Thanks for hanging on."
+          : "Taking a little longer than usual — it's still starting, please wait.";
+
+  return <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">{message}</Text>;
 }
 
 export function ErrorText({ children }: { children?: ReactNode }) {

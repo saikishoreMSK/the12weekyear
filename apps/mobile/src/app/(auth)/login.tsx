@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginValues } from "@twy/core";
 import { ApiException } from "@/lib/api";
 import { useAuth } from "@/features/auth/auth-context";
-import { AuthScreen, Button, ErrorText, LinkText, TextField } from "@/components/ui";
+import { AuthScreen, Button, ErrorText, LinkText, TextField, WakeNotice } from "@/components/ui";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -75,6 +75,8 @@ export default function LoginScreen() {
       <ErrorText>{formError}</ErrorText>
 
       <Button title="Sign in" loading={isSubmitting} onPress={handleSubmit(onSubmit)} />
+
+      <WakeNotice active={isSubmitting} />
 
       <View style={{ flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 8 }}>
         <LinkText onPress={() => router.push("/forgot-password")}>Forgot password?</LinkText>
