@@ -51,3 +51,18 @@ services:
         sync: false
       - key: NODE_VERSION
         value: 22.17.1
+      # ---- Admin panel (/admin) ----
+      # Operator login credentials + the secret that signs the admin session cookie.
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        sync: false
+      # The admin panel reads the DB directly — reuse the SAME values as the backend service above.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
