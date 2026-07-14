@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentType } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
@@ -18,7 +18,7 @@ import { useColors } from "@/theme";
 type IconType = ComponentType<{ color?: string; size?: number }>;
 
 export default function ProfileScreen() {
-  const { user, logout, updateDisplayName } = useAuth();
+  const { user, logout, updateDisplayName, deleteAccount } = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
   const { setColorScheme } = useColorScheme();
@@ -37,6 +37,17 @@ export default function ProfileScreen() {
     const name = draft.trim();
     setEditingName(false);
     if (name) await updateDisplayName(name);
+  }
+
+  function confirmDelete() {
+    Alert.alert(
+      "Delete account?",
+      "This permanently deletes your account and all your data from the cloud. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => void deleteAccount() },
+      ],
+    );
   }
 
   const online = useIsOnline();
@@ -176,9 +187,14 @@ export default function ProfileScreen() {
       </View>
 
       {user ? (
-        <Pressable onPress={() => logout()} className="items-center rounded-lg bg-blue-600 py-3.5 active:opacity-80">
-          <Text className="font-semibold text-white">Sign out</Text>
-        </Pressable>
+        <>
+          <Pressable onPress={() => logout()} className="items-center rounded-lg bg-blue-600 py-3.5 active:opacity-80">
+            <Text className="font-semibold text-white">Sign out</Text>
+          </Pressable>
+          <Pressable onPress={confirmDelete} hitSlop={6} className="items-center py-2 active:opacity-60">
+            <Text className="text-sm font-medium text-red-500">Delete account</Text>
+          </Pressable>
+        </>
       ) : null}
 
       <Text className="text-center text-xs text-neutral-400">Quarterly · v{version}</Text>

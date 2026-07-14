@@ -26,7 +26,7 @@ import { tokenStorage } from "@/lib/token-storage";
 import { clearUser, loadUser, saveUser } from "@/features/auth/user-store";
 import { hasPendingProfile } from "@/lib/outbox";
 import { resetAdoption } from "@/features/sync/adopt";
-import { writeCloudSnapshot } from "@/lib/local-backend";
+import { clearLocalData, writeCloudSnapshot } from "@/lib/local-backend";
 
 // "guest" = using the app locally with no account (local-first). "authenticated" = signed in (cloud).
 type Status = "loading" | "authenticated" | "guest";
@@ -38,6 +38,7 @@ interface AuthContextValue {
   register: (input: RegisterInput) => Promise<RegistrationResult>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -175,6 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  // Permanently delete the cloud account + all its data, wipe local, and fall back to guest.
+  const deleteAccount = useCallback(async () => {
+    await authApi.deleteMe();
+    await clearLocalData();
+    clearSession();
+  }, [clearSession]);
+
   const logout = useCallback(async () => {
     // Snapshot the account's cloud data into the local store first (best-effort, while still
     // authenticated) so guest mode isn't empty after signing out.
@@ -192,8 +200,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const value = useMemo(
-    () => ({ user, status, login, register, verifyEmail, updateDisplayName, logout }),
-    [user, status, login, register, verifyEmail, updateDisplayName, logout],
+    () => ({ user, status, login, register, verifyEmail, updateDisplayName, deleteAccount, logout }),
+    [user, status, login, register, verifyEmail, updateDisplayName, deleteAccount, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

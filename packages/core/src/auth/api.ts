@@ -38,4 +38,7 @@ export const authApi = {
 
   updateMe: (input: { displayName?: string; timezone?: string }) =>
     apiClient.patch<User>("/api/v1/users/me", input),
+
+  /** Permanently delete the account and all its data. */
+  deleteMe: () => apiClient.delete<void>("/api/v1/users/me"),
 };

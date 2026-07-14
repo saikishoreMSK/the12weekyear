@@ -16,4 +16,8 @@ public interface QuarterRepository extends JpaRepository<Quarter, UUID> {
     Optional<Quarter> findByUserIdAndYearAndQuarterNumber(UUID userId, int year, int quarterNumber);
 
     boolean existsByUserIdAndYearAndQuarterNumber(UUID userId, int year, int quarterNumber);
+
+    List<Quarter> findByUserId(UUID userId);
+
+    void deleteByUserId(UUID userId);
 }

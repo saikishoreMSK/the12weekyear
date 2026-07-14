@@ -12,4 +12,6 @@ public interface HabitRepository extends JpaRepository<Habit, UUID> {
     List<Habit> findByUserIdOrderByCreatedAtAsc(UUID userId);
 
     Optional<Habit> findByIdAndUserId(UUID id, UUID userId);
+
+    void deleteByUserId(UUID userId);
 }

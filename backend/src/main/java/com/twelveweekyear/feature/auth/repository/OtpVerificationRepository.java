@@ -21,4 +21,6 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
     @Query("update OtpVerification o set o.consumed = true "
             + "where o.userId = :userId and o.purpose = :purpose and o.consumed = false")
     void consumeAllForUserAndPurpose(@Param("userId") UUID userId, @Param("purpose") OtpPurpose purpose);
+
+    void deleteByUserId(UUID userId);
 }
